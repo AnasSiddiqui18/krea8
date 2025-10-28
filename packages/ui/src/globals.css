@@ -31,6 +31,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -78,7 +79,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
+.light {
   --background: oklch(0.98 0.01 250); /* soft white with slight blue tint */
   --foreground: oklch(0.22 0.02 250); /* dark gray-blue text */
   --card: oklch(0.99 0.005 250);
@@ -87,6 +88,7 @@
   --popover: oklch(0.99 0.005 250);
   --popover-foreground: oklch(0.22 0.02 250);
 
+  --primary-dark: oklch(32% 0.11 255);
   --primary: oklch(0.68 0.18 252); /* vibrant sky blue */
   --primary-foreground: oklch(0.99 0.01 250);
 
@@ -112,7 +114,7 @@
   --chart-4: oklch(0.65 0.13 315);
   --chart-5: oklch(0.65 0.17 20);
 
-  --radius: 0.6rem;
+  --radius: 0.4375rem;
 
   --sidebar-background: oklch(0.98 0.01 250);
   --sidebar-foreground: oklch(0.22 0.02 250);
@@ -131,6 +133,25 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .pretty-scrollbar::-webkit-scrollbar {
+    @apply h-1.5 w-1.5;
+  }
+  .pretty-scrollbar::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-black/15 bg-clip-content dark:bg-secondary;
+  }
+
+  .pretty-scrollbar-lg::-webkit-scrollbar {
+    @apply h-3 w-1;
+  }
+  .pretty-scrollbar-lg::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-black/15 bg-clip-content dark:bg-white;
+  }
+
+  .container {
+    @apply mx-auto w-full max-w-[1400px] px-4 sm:px-8;
+  }
+
   button {
     cursor: pointer;
   }

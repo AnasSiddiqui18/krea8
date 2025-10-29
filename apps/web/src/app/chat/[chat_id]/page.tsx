@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChatInterface } from "@/components/builder/chat-interface";
+import { AppPreview } from "@/components/builder/app-preview";
 
 export default function ChatPage({
   params,
@@ -12,8 +13,9 @@ export default function ChatPage({
   console.log(queryParams);
 
   return (
-    <div className="h-screen bg-background">
+    <div className="h-screen bg-background flex">
       <ChatInterface />
+      <AppPreview />
     </div>
   );
 }

@@ -64,6 +64,14 @@ export function AppPreview() {
           </Button>
         </div>
       </div>
+
+      <div className="h-full">
+        <iframe
+          id="iframeEL"
+          className="h-full w-full"
+          // src=""
+        ></iframe>
+      </div>
     </div>
   );
 }

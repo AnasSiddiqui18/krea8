@@ -1,0 +1,13 @@
+{
+  "index.html": { "file": { "contents": "html content" } },
+  "src": {
+    "directory": {
+      "main.tsx": { "file": { "contents": "main.tsx content" } },
+      "App.tsx": { "file": { "contents": "app.tsx content" } },
+      "index.css": { "file": { "contents": "index.css content" } }
+    }
+  },
+  "vite.config.ts": { "file": { "contents": "vite.config.content" } },
+  "tsconfig.json": { "file": { "contents": "tsconfig.json content" } },
+  "package.json": { "file": { "contents": "package.json content" } }
+}

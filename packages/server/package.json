@@ -1,19 +1,32 @@
 {
-  "name": "server",
+  "name": "@repo/server",
   "module": "index.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --hot src/index.ts"
+    "dev": "bun --watch src/index.ts",
+    "format": "prettier --write \"**/*.{js,mjs,ts,tsx,md,json,css}\""
+  },
+  "exports": {
+    "./*": "./src/*"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.31.6",
+    "@repo/config": "*"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.25",
+    "@neondatabase/serverless": "^1.0.2",
+    "@orpc/openapi": "^1.10.2",
     "@orpc/server": "^1.10.2",
-    "hono": "^4.10.3"
+    "ai": "^5.0.82",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.7",
+    "hono": "^4.10.3",
+    "zod": "^4.1.12"
   }
 }

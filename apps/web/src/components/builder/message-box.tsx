@@ -1,21 +1,17 @@
-import { cn } from "@repo/ui/lib/utils";
+import type { Chat } from "@/store/global.store";
 
-interface MessageBoxProps {
-  content: string;
-  role: "assistant" | "user";
-}
-
-export function MessageBox({ content, role }: MessageBoxProps) {
-  return (
-    <div
-      className={cn(
-        "p-3 rounded-xl text-sm max-w-[75%] leading-relaxed shadow-sm",
-        role === "assistant"
-          ? "bg-primary/10 border border-primary/20 backdrop-blur-sm text-muted-foreground"
-          : "bg-secondary/60 text-muted-foreground border border-secondary/20"
-      )}
-    >
-      {content}
+export function MessageBox({ content }: Chat) {
+  return content?.type === "message" ? (
+    <div className="p-3 text-sm leading-relaxed text-muted-foreground ">
+      {content.message}
+    </div>
+  ) : content?.type === "status" ? (
+    <div className="p-3 text-sm leading-relaxed text-muted-foreground font-bold">
+      {content.message}
+    </div>
+  ) : (
+    <div className="bg-secondary/60 text-muted-foreground max-w-[300px] text-sm p-3 rounded-xl">
+      {content.message}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import type { TreeNode } from "@/components/builder/tree-view-component";
 import { proxy } from "valtio";
 import { devtools } from "valtio/utils";
 
@@ -13,11 +14,13 @@ export interface Chat {
 interface Store {
   initial_prompt: string | null;
   chat: Chat[];
+  fileTree: TreeNode[];
 }
 
 export const globalStore = proxy<Store>({
   initial_prompt: null,
   chat: [],
+  fileTree: [],
 });
 
 devtools(globalStore);

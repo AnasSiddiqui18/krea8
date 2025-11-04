@@ -1,3 +1,4 @@
+import type { TreeNode } from "@/components/builder/tree-view-component";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
 import type { DirectoryNode, FileSystemTree } from "@webcontainer/api";
 
@@ -28,6 +29,53 @@ export function convertFiles(object: Record<string, string>) {
   });
 
   return structuredFiles;
+}
+
+export type fileTreeStructure = TreeNode & { path?: string };
+
+let fileSystemTree: fileTreeStructure[] = [];
+
+export function convertFilesToTree(filePaths: Record<string, string>) {
+  Object.entries(filePaths).forEach(([filePath]) => {
+    const pathSegments = filePath
+      .split("/")
+      .filter((segment) => segment.trim());
+
+    let currentLevel = fileSystemTree;
+    let currentPath = "";
+
+    pathSegments.forEach((segment, idx) => {
+      currentPath += `/${segment}`;
+
+      if (idx === pathSegments.length - 1) {
+        const fileNode = {
+          id: crypto.randomUUID(),
+          label: segment,
+          type: "file" as "dir" | "file",
+          path: currentPath,
+        };
+        currentLevel.push(fileNode);
+        return;
+      }
+
+      const directoryNode = {
+        id: crypto.randomUUID(),
+        label: segment,
+        type: "dir" as "dir" | "file",
+        path: currentPath,
+        children: [],
+      };
+
+      const existingNode = currentLevel.find(
+        (child) => child.label === directoryNode.label,
+      );
+
+      if (!existingNode) currentLevel.push(directoryNode);
+      currentLevel = existingNode?.children ?? directoryNode.children;
+    });
+  });
+
+  return fileSystemTree;
 }
 
 export async function setupWebContainer(files: FileSystemTree) {

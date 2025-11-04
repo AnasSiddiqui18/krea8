@@ -2,12 +2,14 @@ import { Button } from "@repo/ui/components/button";
 import { Input } from "@repo/ui/components/input";
 import { Code, Eye, RotateCw, SquareArrowOutUpRight } from "lucide-react";
 import { useState } from "react";
+import { IDE } from "./ide";
+import { PreviewComponent } from "./preview-component";
 
 export function AppPreview() {
   const [showPreview, setShowPreview] = useState(false);
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="h-14 p-3 border-b-2 border-secondary flex justify-between">
         <div className="flex items-center gap-x-3 p-3 rounded-md bg-secondary backdrop-blur-sm border border-border shadow-sm">
           <Button
@@ -65,13 +67,7 @@ export function AppPreview() {
         </div>
       </div>
 
-      <div className="h-full">
-        <iframe
-          id="iframeEL"
-          className="h-full w-full"
-          // src=""
-        ></iframe>
-      </div>
+      {!showPreview ? <IDE /> : <PreviewComponent />}
     </div>
   );
 }

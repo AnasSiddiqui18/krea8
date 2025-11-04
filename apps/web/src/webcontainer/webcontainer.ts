@@ -12,4 +12,14 @@ export class WebContainerClass {
 
     return this.webcontainer;
   }
+
+  public static async getFiles(filePath: string) {
+    try {
+      const wc = await this.getWebContainer();
+      const file = await wc.fs.readFile(filePath, "utf-8");
+      return file;
+    } catch (error) {
+      console.error("Failed to get files", error);
+    }
+  }
 }

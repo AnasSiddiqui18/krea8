@@ -7,7 +7,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore, type Chat } from "@/store/global.store";
 import { orpcClient } from "@/orpc/orpc-client";
-import { convertFiles, setupWebContainer } from "@/shared/shared";
+import {
+  convertFiles,
+  convertFilesToTree,
+  setupWebContainer,
+} from "@/shared/shared";
 
 export default function ChatPage({
   params,
@@ -62,7 +66,6 @@ export default function ChatPage({
 
             if (event.message === "Template streamed successfully") {
               try {
-                console.log("parsing template", tempalte);
                 const parsedJson = JSON.parse(tempalte);
 
                 if (!parsedJson.template.files) {
@@ -70,9 +73,17 @@ export default function ChatPage({
                   return;
                 }
 
+                console.log("template files", parsedJson.template.files);
+
                 const structuredFiles = convertFiles(parsedJson.template.files);
                 console.log("structuredFiles", structuredFiles);
-                setupWebContainer(structuredFiles);
+
+                console.log("coverting files to tree", structuredFiles);
+
+                const fileTree = convertFilesToTree(parsedJson.template.files);
+                globalStore.fileTree = fileTree;
+
+                await setupWebContainer(structuredFiles);
               } catch (error) {
                 console.error("Failed to parse template json");
               }

@@ -15,12 +15,14 @@ interface Store {
   initial_prompt: string | null;
   chat: Chat[];
   fileTree: TreeNode[];
+  template: string | null;
 }
 
 export const globalStore = proxy<Store>({
   initial_prompt: null,
   chat: [],
   fileTree: [],
+  template: null,
 });
 
 devtools(globalStore);

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { shikiToMonaco } from "@shikijs/monaco";
 import { createHighlighter } from "shiki";
+import type { editor } from "monaco-editor-core";
 
 export function CodeEditor({
   code,
@@ -12,10 +13,9 @@ export function CodeEditor({
   onChange?: (value: string | undefined) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor>(null);
 
   useEffect(() => {
-    let editor: any | null = null;
-
     (async () => {
       const highlighter = await createHighlighter({
         themes: ["github-dark-default"],
@@ -31,8 +31,8 @@ export function CodeEditor({
 
       shikiToMonaco(highlighter, monaco);
 
-      if (containerRef.current) {
-        editor = monaco.editor.create(containerRef.current, {
+      if (containerRef.current && !editorRef.current) {
+        editorRef.current = monaco.editor.create(containerRef.current, {
           value: code,
           language: "typescript",
           theme: "github-dark-default",
@@ -46,11 +46,20 @@ export function CodeEditor({
     })();
 
     return () => {
-      if (editor) {
-        editor.dispose();
+      if (editorRef.current) {
+        editorRef.current.dispose();
       }
     };
   }, []);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  useEffect(() => {
+    if (editorRef.current && code) {
+      const currentValue = editorRef.current.getValue();
+      if (currentValue !== code) {
+        editorRef.current.setValue(code);
+      }
+    }
+  }, [code]);
+
+  return <div ref={containerRef} className="h-full" />;
 }

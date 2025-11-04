@@ -66,6 +66,7 @@ export default function ChatPage({
 
             if (event.message === "Template streamed successfully") {
               try {
+                globalStore.template = tempalte;
                 const parsedJson = JSON.parse(tempalte);
 
                 if (!parsedJson.template.files) {
@@ -75,15 +76,8 @@ export default function ChatPage({
 
                 console.log("template files", parsedJson.template.files);
 
-                const structuredFiles = convertFiles(parsedJson.template.files);
-                console.log("structuredFiles", structuredFiles);
-
-                console.log("coverting files to tree", structuredFiles);
-
                 const fileTree = convertFilesToTree(parsedJson.template.files);
                 globalStore.fileTree = fileTree;
-
-                await setupWebContainer(structuredFiles);
               } catch (error) {
                 console.error("Failed to parse template json");
               }

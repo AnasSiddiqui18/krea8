@@ -5,8 +5,11 @@ import { globalStore } from "@/store/global.store";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
 import { useState } from "react";
 import type { fileTreeStructure } from "@/shared/shared";
+import { cn } from "@repo/ui/lib/utils";
 
-export function IDE() {
+type IDEProps = React.ComponentProps<"div">;
+
+export function IDE({ className, ...props }: IDEProps) {
   const { fileTree } = useSnapshot(globalStore);
   const [selectedFile, setSelectedFile] = useState("");
 
@@ -17,12 +20,12 @@ export function IDE() {
   }
 
   return (
-    <div className="h-full flex w-full">
+    <div className={cn("h-full flex w-full", className)} {...props}>
       <div className="w-[300px] border border-secondary-foreground/10">
         <TreeView data={fileTree} onNodeClick={handleSelectFile} />
       </div>
-      <div className="w-full border border-secondary-foreground/10">
-        <CodeEditor code={selectedFile} key={selectedFile} />
+      <div className="w-full h-full ">
+        <CodeEditor code={selectedFile} />
       </div>
     </div>
   );

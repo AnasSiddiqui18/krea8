@@ -2,12 +2,17 @@ import type { TreeNode } from "@/components/builder/tree-view-component";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
 import type { DirectoryNode, FileSystemTree } from "@webcontainer/api";
 
+export type fileTreeStructure = TreeNode & { path?: string };
+
 const structuredFiles: FileSystemTree = {};
+
+export const trimPath = (path: string) =>
+  path.split("/").filter((e) => e.trim());
 
 export function convertFiles(object: Record<string, string>) {
   Object.entries(object).forEach((str) => {
     const [filePath, fileContent] = str;
-    const filteredPath = filePath.split("/").filter((p) => p.trim());
+    const filteredPath = trimPath(filePath);
     let objectRef = structuredFiles;
 
     filteredPath.forEach((path, idx) => {
@@ -30,8 +35,6 @@ export function convertFiles(object: Record<string, string>) {
 
   return structuredFiles;
 }
-
-export type fileTreeStructure = TreeNode & { path?: string };
 
 let fileSystemTree: fileTreeStructure[] = [];
 
@@ -76,6 +79,50 @@ export function convertFilesToTree(filePaths: Record<string, string>) {
   });
 
   return fileSystemTree;
+}
+
+export function findSiblingNodes(
+  targetPath: string,
+  fileTree: fileTreeStructure[],
+) {
+  const pathSegments = trimPath(targetPath);
+  let currentLevel: fileTreeStructure[] = fileTree;
+  let accumulatedPath = "";
+
+  return pathSegments
+    .map((segment) => {
+      if (!currentLevel.length) return;
+
+      accumulatedPath += `/${segment}`;
+
+      const isSrcPath = targetPath === "/src";
+
+      const currentNode = currentLevel.find(
+        (node) => node.path === accumulatedPath,
+      );
+
+      const traversalParent =
+        !isSrcPath && currentNode?.children
+          ? currentNode?.children
+          : currentLevel;
+
+      const isTargetChild = traversalParent.find(
+        (child: fileTreeStructure) => child?.path === targetPath,
+      );
+
+      if (isTargetChild) {
+        const siblingNodes = traversalParent.filter(
+          (child: fileTreeStructure) => child?.path !== targetPath,
+        );
+
+        currentLevel = [];
+        return siblingNodes;
+      }
+
+      currentLevel = currentNode?.children ?? [];
+    })
+    .filter(Boolean)
+    .at(0);
 }
 
 export async function setupWebContainer(files: FileSystemTree) {

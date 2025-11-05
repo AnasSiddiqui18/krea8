@@ -16,6 +16,10 @@ interface Store {
   chat: Chat[];
   fileTree: TreeNode[];
   template: string | null;
+  selectedFile: Partial<{
+    code: string;
+    path: string;
+  }>;
 }
 
 export const globalStore = proxy<Store>({
@@ -23,6 +27,7 @@ export const globalStore = proxy<Store>({
   chat: [],
   fileTree: [],
   template: null,
+  selectedFile: {},
 });
 
 devtools(globalStore);

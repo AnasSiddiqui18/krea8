@@ -6,7 +6,7 @@ import { IDE } from "./ide";
 import { PreviewComponent } from "./preview-component";
 
 export function AppPreview() {
-  const [showPreview, setShowPreview] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">

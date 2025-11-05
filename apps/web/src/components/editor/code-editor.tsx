@@ -2,18 +2,20 @@ import { useEffect, useRef } from "react";
 import { shikiToMonaco } from "@shikijs/monaco";
 import { createHighlighter } from "shiki";
 import type { editor } from "monaco-editor-core";
+import { useSnapshot } from "@/hooks/use-snapshot";
+import { globalStore } from "@/store/global.store";
 
 export function CodeEditor({
-  code,
   lang,
   onChange,
 }: {
-  code?: string;
   lang?: string;
   onChange?: (value: string | undefined) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor>(null);
+
+  const { selectedFile } = useSnapshot(globalStore);
 
   useEffect(() => {
     (async () => {
@@ -33,7 +35,7 @@ export function CodeEditor({
 
       if (containerRef.current && !editorRef.current) {
         editorRef.current = monaco.editor.create(containerRef.current, {
-          value: code,
+          value: selectedFile.code,
           language: "typescript",
           theme: "github-dark-default",
           minimap: { enabled: false },
@@ -53,13 +55,13 @@ export function CodeEditor({
   }, []);
 
   useEffect(() => {
-    if (editorRef.current && code) {
+    if (editorRef.current && selectedFile.code) {
       const currentValue = editorRef.current.getValue();
-      if (currentValue !== code) {
-        editorRef.current.setValue(code);
+      if (currentValue !== selectedFile.code) {
+        editorRef.current.setValue(selectedFile.code);
       }
     }
-  }, [code]);
+  }, [selectedFile.code]);
 
   return <div ref={containerRef} className="h-full" />;
 }

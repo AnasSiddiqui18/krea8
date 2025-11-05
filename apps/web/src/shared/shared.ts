@@ -101,17 +101,15 @@ export function findSiblingNodes(
         (node) => node.path === accumulatedPath,
       );
 
-      const traversalParent =
-        !isSrcPath && currentNode?.children
-          ? currentNode?.children
-          : currentLevel;
+      if (!isSrcPath && currentNode?.children)
+        currentLevel = currentNode?.children ?? [];
 
-      const isTargetChild = traversalParent.find(
+      const isTargetChild = currentLevel.find(
         (child: fileTreeStructure) => child?.path === targetPath,
       );
 
       if (isTargetChild) {
-        const siblingNodes = traversalParent.filter(
+        const siblingNodes = currentLevel.filter(
           (child: fileTreeStructure) => child?.path !== targetPath,
         );
 

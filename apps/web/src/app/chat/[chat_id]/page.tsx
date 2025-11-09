@@ -3,15 +3,22 @@
 import React, { useEffect, useRef } from "react";
 import { ChatInterface } from "@/components/builder/chat-interface";
 import { AppPreview } from "@/components/builder/app-preview";
-import { useMutation } from "@tanstack/react-query";
 import { useSnapshot } from "@/hooks/use-snapshot";
-import { globalStore, type Chat } from "@/store/global.store";
-import { orpcClient } from "@/orpc/orpc-client";
+import { globalStore } from "@/store/global.store";
+import { useChat, useChatStore } from "@ai-sdk-tools/store";
+import { filesEx, projectFiles } from "@/data/data";
+import { experimental_useObject as useObject } from "@ai-sdk/react";
+import { fragmentSchema } from "@/schema/schema";
 import {
-  convertFiles,
   convertFilesToTree,
   setupWebContainer,
+  updateContainerFiles,
 } from "@/shared/shared";
+import { NextTemplate } from "@/templates/next-template";
+import { DefaultChatTransport } from "ai";
+
+const isValidPath = (path: string | undefined) =>
+  path ? filesEx.some((p) => path.includes(p)) : false;
 
 export default function ChatPage({
   params,
@@ -19,88 +26,97 @@ export default function ChatPage({
   params: Promise<{ chat_id: string }>;
 }) {
   const { initial_prompt } = useSnapshot(globalStore);
-  const hasAlreadyMutated = useRef(false);
+  const hasMessageSend = useRef(false);
+  const hasTemplateFed = useRef(false);
+  const { pushMessage } = useChatStore();
+  const processedPaths = useRef<Map<string, string>>(new Map());
 
-  let tempalte = "";
+  const { object, submit } = useObject({
+    api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website`,
+    schema: fragmentSchema,
+    onFinish: async (event) => {
+      const code = event.object?.code;
 
-  const { mutate } = useMutation({
-    mutationFn: async ({ prompt }: { prompt: string }) => {
-      try {
-        const iterator = (await orpcClient.website.create({
-          prompt: prompt ?? "fallback prompt",
-        })) as any;
+      if (code?.length) {
+        code?.forEach((c) => {
+          const isFilesPresent = projectFiles.find(
+            (file) => file.file_path === c.file_path,
+          );
 
-        for await (const event of iterator) {
-          const lastIndex = globalStore.chat.length - 1;
-          const agentMessage = globalStore.chat.at(1) as Chat;
-
-          if (event.data === "message") {
-            // normal message
-
-            if (!agentMessage) {
-              globalStore.chat.push({
-                content: { message: event.message, type: event.data },
-                role: "assistant",
-                isThinking: true,
-              });
-
-              //
-            } else {
-              agentMessage.content = {
-                type: event.data,
-                message: (agentMessage.content.message += event.message),
-              };
-              globalStore.chat[lastIndex] = agentMessage;
-            }
-          } else if (event.data === "status") {
-            const object = {
-              type: event.data,
-              message: event.message,
-            };
-
-            globalStore.chat.push({
-              content: object,
-              isThinking: false,
-              role: "assistant",
-            });
-
-            if (event.message === "Template streamed successfully") {
-              try {
-                globalStore.template = tempalte;
-                const parsedJson = JSON.parse(tempalte);
-
-                if (!parsedJson.template.files) {
-                  console.error("files not found returning...");
-                  return;
-                }
-
-                console.log("template files", parsedJson.template.files);
-
-                const fileTree = convertFilesToTree(parsedJson.template.files);
-                globalStore.fileTree = fileTree;
-              } catch (error) {
-                console.error("Failed to parse template json");
-              }
-            }
-          } else if (event.data === "code") {
-            tempalte += event.message;
+          if (!isFilesPresent) {
+            const newFiles = { file_path: c.file_path };
+            projectFiles.push(newFiles);
           }
-        }
-      } catch (error) {
-        console.error("Failed to post to server", error);
+        });
+
+        await updateContainerFiles(code);
+
+        console.log("creating files structure");
+        const structuredFiles = convertFilesToTree(projectFiles);
+        globalStore.fileTree = structuredFiles;
       }
     },
   });
 
-  const resolvedParams = React.use(params);
+  useEffect(() => {
+    if (object && object.code) {
+      const currentFile = object.code.at(-1);
+      const currentPath = currentFile?.file_path;
+      const currentAction = currentFile?.action;
+      const isPathValid = isValidPath(currentPath);
+
+      if (
+        currentPath &&
+        isPathValid &&
+        currentAction &&
+        !processedPaths.current.has(currentPath)
+      ) {
+        const content = `<lov-tool-use action='${currentFile?.action}' path='${currentFile?.file_path}'></lov-tool-use>`;
+
+        processedPaths.current.set(currentPath, currentAction);
+
+        pushMessage({
+          id: crypto.randomUUID(),
+          role: "assistant",
+          parts: [{ text: content, type: "text" }],
+        });
+      }
+    }
+  }, [object]);
+
+  const { sendMessage, messages } = useChat({
+    transport: new DefaultChatTransport({
+      api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/init`,
+    }),
+
+    onFinish: () => {
+      console.log("chat streaing finished");
+      submit({ prompt: initial_prompt });
+    },
+  });
 
   useEffect(() => {
-    if (!resolvedParams.chat_id || !initial_prompt || hasAlreadyMutated.current)
-      return;
+    if (!initial_prompt || hasMessageSend.current) return;
+    hasMessageSend.current = true;
+    sendMessage({ text: initial_prompt });
+  }, [initial_prompt]);
 
-    mutate({ prompt: initial_prompt });
-    hasAlreadyMutated.current = true;
-  }, [resolvedParams.chat_id, initial_prompt, mutate]);
+  useEffect(() => {
+    async function feedTemplateInContainer() {
+      hasTemplateFed.current = true;
+
+      try {
+        console.log("feeding template inside webcontainer");
+        await setupWebContainer(NextTemplate);
+      } catch (error) {
+        console.error("Failed to feed file inside webcontainer");
+      }
+    }
+
+    if (!hasTemplateFed.current && initial_prompt) feedTemplateInContainer();
+  }, []);
+
+  const resolvedParams = React.use(params);
 
   return (
     <div className="h-screen bg-background flex">

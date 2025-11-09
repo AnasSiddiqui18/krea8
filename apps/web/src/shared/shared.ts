@@ -1,6 +1,11 @@
 import type { TreeNode } from "@/components/builder/tree-view-component";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
-import type { DirectoryNode, FileSystemTree } from "@webcontainer/api";
+import type {
+  DirectoryNode,
+  FileSystemTree,
+  WebContainer,
+} from "@webcontainer/api";
+import { writeFileSync } from "fs";
 
 export type fileTreeStructure = TreeNode & { path?: string };
 
@@ -38,9 +43,11 @@ export function convertFiles(object: Record<string, string>) {
 
 let fileSystemTree: fileTreeStructure[] = [];
 
-export function convertFilesToTree(filePaths: Record<string, string>) {
-  Object.entries(filePaths).forEach(([filePath]) => {
-    const pathSegments = filePath
+export function convertFilesToTree(files: any[]) {
+  files.forEach((file) => {
+    const { file_path } = file as Record<string, string>;
+
+    const pathSegments = file_path!
       .split("/")
       .filter((segment) => segment.trim());
 
@@ -126,17 +133,18 @@ export function findSiblingNodes(
 export async function setupWebContainer(files: FileSystemTree) {
   try {
     console.log("setting up container");
-
     const wc = await WebContainerClass.getWebContainer();
+    await wc.mount(files);
+    const installProcess = await wc.spawn("npm", ["i"]);
     const iframeEl = document.querySelector("#iframeEL") as HTMLIFrameElement;
 
-    console.log("mounting files");
-
-    wc.mount(files);
-
-    console.log("installing deps");
-
-    const installProcess = await wc.spawn("npm", ["install"]);
+    installProcess.output.pipeTo(
+      new WritableStream({
+        write(data) {
+          console.log("installing deps", data);
+        },
+      }),
+    );
 
     const installExitCode = await installProcess.exit;
 
@@ -144,23 +152,79 @@ export async function setupWebContainer(files: FileSystemTree) {
       throw new Error("Unable to run npm install");
     }
 
-    wc.on("server-ready", (_, url) => {
-      console.log("webcontainer url", url);
-      iframeEl.src = url;
-    });
+    const devProces = await wc.spawn("npm", ["run", "dev"]);
 
-    console.log("starting dev server");
-
-    const devProcess = await wc.spawn("npm", ["run", "dev"]);
-
-    devProcess.output.pipeTo(
+    devProces.output.pipeTo(
       new WritableStream({
         write(data) {
-          console.log(data);
+          console.log("start dev server");
+          console.log("dev server", data);
         },
       }),
     );
+
+    wc.on("server-ready", (_, url) => {
+      console.log("feeding url in iframeEL");
+      iframeEl.src = url;
+    });
   } catch (error) {
     console.error("Webcontainer setup failed", error);
   }
+}
+
+async function ensureDirectoryExists(
+  dirPath: string,
+  webcontainer: WebContainer,
+) {
+  try {
+    console.log("Checking or creating directory:", dirPath);
+    await webcontainer.fs.readdir(dirPath);
+    return { success: true };
+  } catch {
+    await webcontainer.fs.mkdir(dirPath, { recursive: true });
+    return { success: true };
+  }
+}
+
+async function writeFileToContainer(filePath: string, fileContent: string) {
+  try {
+    const webcontainer = await WebContainerClass.getWebContainer();
+    await webcontainer.fs.writeFile(filePath, fileContent);
+  } catch (error) {
+    console.error("Failed to write file:", filePath, error);
+  }
+}
+
+export async function updateContainerFiles(files: Record<string, string>[]) {
+  const webcontainer = await WebContainerClass.getWebContainer();
+
+  const insertionPromise = files.map(async (object) => {
+    const { file_path, file_content } = object;
+
+    if (!file_path || !file_content) {
+      console.error("file path or content not found", file_path, file_content);
+      return;
+    }
+
+    const pathSegments = trimPath(file_path);
+    const folderSegments = pathSegments.slice(0, -1);
+
+    if (!folderSegments.length) {
+      console.log("Writing root file:", file_path);
+      await writeFileToContainer(file_path, file_content);
+      return;
+    }
+
+    const folderPath = `/${folderSegments.join("/")}`;
+    const result = await ensureDirectoryExists(folderPath, webcontainer);
+
+    if (result.success) {
+      await writeFileToContainer(file_path, file_content);
+      console.log("File written:", file_path);
+    }
+  });
+
+  console.log("files inserted successfully");
+
+  await Promise.all(insertionPromise);
 }

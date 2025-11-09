@@ -61,13 +61,7 @@ function MainPromptArea() {
 
   function onSubmit(value: z.infer<typeof initialPromptSchema>) {
     const { initial_prompt } = value;
-
-    globalStore.chat.push({
-      content: { message: initial_prompt },
-      role: "user",
-    });
     globalStore.initial_prompt = initial_prompt;
-
     redirect("/chat/1234");
   }
 

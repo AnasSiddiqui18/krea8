@@ -16,7 +16,7 @@ export function IDE({ className, ...props }: IDEProps) {
   const { fileTree, template, selectedFile } = useSnapshot(globalStore);
 
   async function handleSelectFile(file: fileTreeStructure) {
-    if (file.type !== "file" || !file.path || !template) {
+    if (file.type !== "file" || !file.path) {
       console.log("if runs", file.type, file.path, template?.slice(0, 5));
       return;
     }
@@ -45,8 +45,6 @@ export function IDE({ className, ...props }: IDEProps) {
         siblings,
       };
     });
-
-    console.log("siblings data", structuredFiles);
 
     return structuredFiles;
   }, [selectedFile.path]);

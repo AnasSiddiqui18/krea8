@@ -4,16 +4,11 @@ import { devtools } from "valtio/utils";
 
 export interface Chat {
   role: "assistant" | "user";
-  content: {
-    type?: string;
-    message: string;
-  };
-  isThinking?: boolean;
+  content: string;
 }
 
 interface Store {
   initial_prompt: string | null;
-  chat: Chat[];
   fileTree: TreeNode[];
   template: string | null;
   selectedFile: Partial<{
@@ -24,7 +19,6 @@ interface Store {
 
 export const globalStore = proxy<Store>({
   initial_prompt: null,
-  chat: [],
   fileTree: [],
   template: null,
   selectedFile: {},

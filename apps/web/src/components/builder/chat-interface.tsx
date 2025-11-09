@@ -3,16 +3,14 @@ import { Separator } from "@repo/ui/components/separator";
 import { Textarea } from "@repo/ui/components/textarea";
 import { SendIcon } from "lucide-react";
 import { MessageBox } from "./message-box";
-import { cn } from "@repo/ui/lib/utils";
-import { useSnapshot } from "@/hooks/use-snapshot";
-import { globalStore } from "@/store/global.store";
-// import { sampleConversation } from "@/data/data";
+import z from "zod";
+import { useChatMessages } from "@ai-sdk-tools/store";
 
 export function ChatInterface() {
-  const { chat } = useSnapshot(globalStore);
+  const messages = useChatMessages();
 
   return (
-    <div className="h-full w-md text-secondary relative border-r-2 border-secondary">
+    <div className="h-full w-lg text-secondary relative border-r-2 border-secondary">
       {/* header */}
 
       <div className="h-14 p-3 border-b-2 border-secondary">
@@ -23,21 +21,19 @@ export function ChatInterface() {
         </div>
       </div>
 
-      <div className="h-[700px] pretty-scrollbar overflow-y-auto py-5">
-        {chat.map((msg, idx) => {
+      <div className="h-[700px] pretty-scrollbar overflow-y-auto py-5 space-y-3">
+        {messages.map((msg, idx) => {
           return (
-            <div
-              className={cn(
-                "flex px-2",
-                msg.role !== "assistant" && "justify-end",
-              )}
-              key={idx}
-            >
-              <MessageBox
-                content={msg.content}
-                role={msg.role as "assistant" | "user"}
-                isThinking={false}
-              />
+            <div className="px-2" key={idx}>
+              {msg.parts.map((part, idx) => {
+                return part.type === "text" ? (
+                  <MessageBox
+                    key={idx}
+                    content={part.text}
+                    role={msg.role as "assistant" | "user"}
+                  />
+                ) : null;
+              })}
             </div>
           );
         })}

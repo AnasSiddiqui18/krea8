@@ -131,6 +131,8 @@ Return **only valid JSON** — no markdown, no comments, no extra text.
 
 --- IMPORTANT create separate components to make things reusable.
 
+-- Don't use external packages at any cost. use crypto module for unique id generation.
+
 ### 📂 Template Structure (for reference only)
 
 my-next-app/

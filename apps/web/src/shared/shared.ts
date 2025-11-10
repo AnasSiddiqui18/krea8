@@ -133,7 +133,7 @@ export function findSiblingNodes(
 
 export async function installDeps() {
   try {
-    console.log("installing deps container");
+    console.log("installing deps");
     const wc = await WebContainerClass.getWebContainer();
     const installProcess = await wc.spawn("npm", ["i"]);
     const iframeEl = document.querySelector("#iframeEL") as HTMLIFrameElement;
@@ -181,10 +181,11 @@ export async function installDeps() {
   }
 }
 
-export async function mountFilesInWebContainer(files: FileSystemTree) {
+export async function mountTemplateFilesInWebContainer(files: FileSystemTree) {
   try {
     console.log("setting up container");
     const wc = await WebContainerClass.getWebContainer();
+    console.log("mounting files");
     await wc.mount(files);
   } catch (error) {
     console.error("Failed to insert files inside wc", error);
@@ -214,7 +215,10 @@ async function writeFileToContainer(filePath: string, fileContent: string) {
   }
 }
 
-export async function updateContainerFiles(files: Record<string, string>[]) {
+export async function updateContainerFiles(
+  files: Record<string, string>[],
+  projectFiles: Record<string, string>[],
+) {
   try {
     const webcontainer = await WebContainerClass.getWebContainer();
 
@@ -248,10 +252,9 @@ export async function updateContainerFiles(files: Record<string, string>[]) {
       }
     });
 
-    console.log("files inserted successfully");
-
     await Promise.all(insertionPromise);
-    await installDeps();
+    console.log("creating files structure");
+    return convertFilesToTree(projectFiles);
   } catch (error) {
     console.error("Failed to update container files", error);
   }

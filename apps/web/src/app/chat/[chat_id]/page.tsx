@@ -5,17 +5,17 @@ import { ChatInterface } from "@/components/builder/chat-interface";
 import { AppPreview } from "@/components/builder/app-preview";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
-import { useChat, useChatStore, useChatStatus } from "@ai-sdk-tools/store";
+import { useChat, useChatStore } from "@ai-sdk-tools/store";
 import { filesEx, projectFiles } from "@/data/data";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { fragmentSchema } from "@/schema/schema";
 import {
-  convertFilesToTree,
-  mountFilesInWebContainer,
+  installDeps,
+  mountTemplateFilesInWebContainer,
   updateContainerFiles,
 } from "@/shared/shared";
 import { NextTemplate } from "@/templates/next-template";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, RetryError } from "ai";
 
 const isValidPath = (path: string | undefined) =>
   path ? filesEx.some((p) => path.includes(p)) : false;
@@ -27,7 +27,6 @@ export default function ChatPage({
 }) {
   const { initial_prompt } = useSnapshot(globalStore);
   const hasMessageSend = useRef(false);
-  const hasTemplateFed = useRef(false);
   const { pushMessage } = useChatStore();
   const processedPaths = useRef<Map<string, string>>(new Map());
 
@@ -56,10 +55,18 @@ export default function ChatPage({
           }
         });
 
-        await updateContainerFiles(code);
-        console.log("creating files structure");
-        const structuredFiles = convertFilesToTree(projectFiles);
+        console.log("updating container files");
+
+        const structuredFiles = await updateContainerFiles(code, projectFiles);
+
+        if (!structuredFiles) {
+          console.error("Failed to update files inside container");
+          return;
+        }
+
         globalStore.fileTree = structuredFiles;
+
+        await installDeps();
       }
     },
   });
@@ -72,12 +79,14 @@ export default function ChatPage({
     onFinish: async ({ isError }) => {
       if (isError) {
         console.log("error", error);
+        return;
       }
 
       console.log("chat streaing finished", status);
-      submit({ prompt: initial_prompt });
 
-      return;
+      globalStore.isPreviewLoading = true;
+      await mountTemplateFilesInWebContainer(NextTemplate);
+      submit({ prompt: initial_prompt });
     },
   });
 
@@ -112,22 +121,6 @@ export default function ChatPage({
     hasMessageSend.current = true;
     sendMessage({ text: initial_prompt });
   }, [initial_prompt]);
-
-  useEffect(() => {
-    async function feedTemplateInContainer() {
-      hasTemplateFed.current = true;
-
-      try {
-        console.log("feeding template inside webcontainer");
-        globalStore.isPreviewLoading = true;
-        await mountFilesInWebContainer(NextTemplate);
-      } catch (error) {
-        console.error("Failed to feed file inside webcontainer");
-      }
-    }
-
-    if (!hasTemplateFed.current && initial_prompt) feedTemplateInContainer();
-  }, [hasTemplateFed.current, initial_prompt]);
 
   const resolvedParams = React.use(params);
 

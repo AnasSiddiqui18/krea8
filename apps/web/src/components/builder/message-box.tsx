@@ -1,10 +1,9 @@
-import type { Chat } from "@/store/global.store";
 import { cn } from "@repo/ui/lib/utils";
 import { FileIcon } from "lucide-react";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 
-export function MessageBox({ content, role }: Chat) {
+export function MessageBox({ content, role }: any) {
   const FileEvent = ({ action, path }: { action: string; path: string }) => {
     const actionStyles: Record<string, string> = {
       creating: "border-yellow-500 bg-yellow-50 text-yellow-800",

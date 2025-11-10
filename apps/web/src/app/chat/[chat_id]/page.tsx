@@ -5,13 +5,13 @@ import { ChatInterface } from "@/components/builder/chat-interface";
 import { AppPreview } from "@/components/builder/app-preview";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
-import { useChat, useChatStore } from "@ai-sdk-tools/store";
+import { useChat, useChatStore, useChatStatus } from "@ai-sdk-tools/store";
 import { filesEx, projectFiles } from "@/data/data";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { fragmentSchema } from "@/schema/schema";
 import {
   convertFilesToTree,
-  setupWebContainer,
+  mountFilesInWebContainer,
   updateContainerFiles,
 } from "@/shared/shared";
 import { NextTemplate } from "@/templates/next-template";
@@ -35,6 +35,13 @@ export default function ChatPage({
     api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website`,
     schema: fragmentSchema,
     onFinish: async (event) => {
+      console.log("finish website creation");
+
+      if (event.error) {
+        console.error("Website creation failed", event.error);
+        return;
+      }
+
       const code = event.object?.code;
 
       if (code?.length) {
@@ -50,11 +57,27 @@ export default function ChatPage({
         });
 
         await updateContainerFiles(code);
-
         console.log("creating files structure");
         const structuredFiles = convertFilesToTree(projectFiles);
         globalStore.fileTree = structuredFiles;
       }
+    },
+  });
+
+  const { sendMessage, error, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/init`,
+    }),
+
+    onFinish: async ({ isError }) => {
+      if (isError) {
+        console.log("error", error);
+      }
+
+      console.log("chat streaing finished", status);
+      submit({ prompt: initial_prompt });
+
+      return;
     },
   });
 
@@ -84,17 +107,6 @@ export default function ChatPage({
     }
   }, [object]);
 
-  const { sendMessage, messages } = useChat({
-    transport: new DefaultChatTransport({
-      api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/init`,
-    }),
-
-    onFinish: () => {
-      console.log("chat streaing finished");
-      submit({ prompt: initial_prompt });
-    },
-  });
-
   useEffect(() => {
     if (!initial_prompt || hasMessageSend.current) return;
     hasMessageSend.current = true;
@@ -107,14 +119,15 @@ export default function ChatPage({
 
       try {
         console.log("feeding template inside webcontainer");
-        await setupWebContainer(NextTemplate);
+        globalStore.isPreviewLoading = true;
+        await mountFilesInWebContainer(NextTemplate);
       } catch (error) {
         console.error("Failed to feed file inside webcontainer");
       }
     }
 
     if (!hasTemplateFed.current && initial_prompt) feedTemplateInContainer();
-  }, []);
+  }, [hasTemplateFed.current, initial_prompt]);
 
   const resolvedParams = React.use(params);
 

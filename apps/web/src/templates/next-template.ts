@@ -82,9 +82,7 @@ body {
 
   "tailwind.config.mjs": {
     file: {
-      contents: `import type { Config } from "tailwindcss";
-
-const config: Config = {
+      contents: `const config= {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",

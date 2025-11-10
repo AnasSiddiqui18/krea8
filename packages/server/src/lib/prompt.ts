@@ -81,9 +81,7 @@ When the user shares their project idea, respond with a brief warm acknowledgmen
 - [Essential feature 2]
 
 #### Technical Stack
-- Frontend: [Choice] current using Next.js
-- Backend: [Choice] 
-- Database: [Choice]
+- Frontend: [Next.js] 
 
 #### Approach
 [Brief 2-3 line strategy]
@@ -154,5 +152,4 @@ user prompt
 ${prompt}
 
 **CRITICAL: If updating the current files from the template so the action will be updating otherwise if creating new files so the action would be creating.
-
 `;

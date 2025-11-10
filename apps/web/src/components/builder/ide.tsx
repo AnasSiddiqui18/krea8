@@ -13,15 +13,15 @@ import { Breadcrumb, BreadcrumbList } from "@repo/ui/components/breadcrumb";
 type IDEProps = React.ComponentProps<"div">;
 
 export function IDE({ className, ...props }: IDEProps) {
-  const { fileTree, template, selectedFile } = useSnapshot(globalStore);
+  const { fileTree, selectedFile, isPreviewLoading } = useSnapshot(globalStore);
 
   async function handleSelectFile(file: fileTreeStructure) {
     if (file.type !== "file" || !file.path) {
-      console.log("if runs", file.type, file.path, template?.slice(0, 5));
+      console.log("if runs", file.type, file.path);
       return;
     }
 
-    const code = (await WebContainerClass.getFiles(file.path)) as string;
+    const code = (await WebContainerClass.getFile(file.path)) as string;
 
     console.log("selecting file");
 
@@ -54,6 +54,15 @@ export function IDE({ className, ...props }: IDEProps) {
       <div className="w-[300px] border border-secondary-foreground/10 h-9">
         {fileTree.length ? (
           <TreeView data={fileTree} onNodeClick={handleSelectFile} />
+        ) : !fileTree.length && isPreviewLoading ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-10 mt-4">
+            <div className="relative">
+              <div className="h-7 w-7 rounded-full border-2 border-muted-foreground/20 border-t-primary animate-spin" />
+            </div>
+            <div className="flex flex-col items-center text-center text-secondary-foreground">
+              <span className="animate-pulse text-sm">Loading files...</span>
+            </div>
+          </div>
         ) : undefined}
       </div>
 

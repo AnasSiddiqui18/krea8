@@ -38,7 +38,7 @@ export function CodeEditor({
           value: selectedFile.code,
           language: "typescript",
           theme: "github-dark-default",
-          wordBreak: "normal",          
+          wordWrap: "on",
           minimap: { enabled: false },
           suggestOnTriggerCharacters: true,
           automaticLayout: true,

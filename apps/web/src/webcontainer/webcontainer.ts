@@ -13,7 +13,7 @@ export class WebContainerClass {
     return this.webcontainer;
   }
 
-  public static async getFiles(filePath: string) {
+  public static async getFile(filePath: string) {
     try {
       const wc = await this.getWebContainer();
       const file = await wc.fs.readFile(filePath, "utf-8");

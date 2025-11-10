@@ -1,4 +1,4 @@
-import { smoothStream, streamObject, streamText } from "ai";
+import { consumeStream, smoothStream, streamObject, streamText } from "ai";
 import { generateWebsitePrompt, initialPrompt } from "../lib/prompt";
 import { model } from "../lib/ai/google";
 import { HTTPException } from "hono/http-exception";
@@ -15,7 +15,7 @@ websiteRouter.post("/init", async (c) => {
 
     if (!prompt) throw new HTTPException(400, { message: "Prompt not found" });
 
-    const result = await streamText({
+    const result = streamText({
       model,
       prompt: initialPrompt(prompt),
       experimental_transform: smoothStream({
@@ -33,6 +33,8 @@ websiteRouter.post("/init", async (c) => {
 websiteRouter.post("/create-website", async (c) => {
   try {
     const { prompt } = await c.req.json();
+
+    console.log("prompt reecived!!", prompt);
 
     if (!prompt) throw new HTTPException(400, { message: "Prompt not found" });
 

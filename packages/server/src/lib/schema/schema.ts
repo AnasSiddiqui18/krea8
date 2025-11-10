@@ -1,12 +1,7 @@
 import z from "zod";
 
 export const fragmentSchema = z.object({
-  commentary: z
-    .string()
-    .describe(
-      `Describe what you're about to do and the steps you want to take for generating the fragment in great detail.`,
-    ),
-
+  
   code: z.array(
     z.object({
       action: z.enum(["creating", "updating"]).describe(`

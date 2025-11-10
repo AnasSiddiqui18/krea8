@@ -19,4 +19,4 @@ app.get("/", (c) => {
 
 app.route("/website", websiteRouter);
 
-export default { port: 3001, fetch: app.fetch };
+export default { port: 3001, fetch: app.fetch, idleTimeout: 60 };

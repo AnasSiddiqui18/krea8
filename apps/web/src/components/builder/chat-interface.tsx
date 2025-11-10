@@ -1,23 +1,25 @@
 import { Button } from "@repo/ui/components/button";
-import { Separator } from "@repo/ui/components/separator";
 import { Textarea } from "@repo/ui/components/textarea";
 import { SendIcon } from "lucide-react";
 import { MessageBox } from "./message-box";
-import z from "zod";
-import { useChatMessages } from "@ai-sdk-tools/store";
+import { useChatMessages, useChatStatus } from "@ai-sdk-tools/store";
+import { TextShimmer } from "@repo/ui/components/text-shimmer";
+import { redirect } from "next/navigation";
 
 export function ChatInterface() {
   const messages = useChatMessages();
+  const status = useChatStatus();
 
   return (
     <div className="h-full w-lg text-secondary relative border-r-2 border-secondary">
       {/* header */}
 
       <div className="h-14 p-3 border-b-2 border-secondary">
-        <div className="flex gap-4 items-center h-full">
-          <div className="font-bold text-base text-primary">Krea8 🚀</div>
-          <Separator className="rotate-12 bg-primary" orientation="vertical" />
-          <div className="text-secondary-foreground">Todo App</div>
+        <div
+          onClick={() => redirect("/")}
+          className="font-bold text-lg text-primary cursor-pointer inline"
+        >
+          Krea8 🚀
         </div>
       </div>
 
@@ -37,6 +39,10 @@ export function ChatInterface() {
             </div>
           );
         })}
+
+        <div className="px-2">
+          {status === "submitted" && <TextShimmer>Thinking...</TextShimmer>}
+        </div>
       </div>
 
       <div className="absolute bottom-6 right-5 left-5 h-36 border border-primary/20 rounded-md">

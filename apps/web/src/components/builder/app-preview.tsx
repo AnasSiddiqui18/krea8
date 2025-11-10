@@ -11,51 +11,49 @@ export function AppPreview() {
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="h-14 p-3 border-b-2 border-secondary flex justify-between">
-        <div className="flex items-center gap-x-3 p-3 rounded-md bg-secondary backdrop-blur-sm border border-border shadow-sm">
+        <div className="flex items-center space-x-2 justify-center mx-auto">
           <Button
             size="sm"
-            className={`rounded-md transition-all duration-200 h-6 ${
+            className={`rounded-md h-7 px-3 text-sm font-medium transition-all duration-300 ${
               showPreview
-                ? "bg-primary text-white shadow-sm"
-                : "bg-secondary text-muted-foreground hover:bg-transparent"
+                ? "bg-primary text-primary-foreground shadow-md scale-105"
+                : "bg-transparent text-muted-foreground hover:bg-secondary"
             }`}
             onClick={() => setShowPreview(true)}
           >
-            <Eye />
+            Preview
           </Button>
 
           <Button
             size="sm"
-            className={`rounded-md transition-all duration-200 h-6 ${
+            className={`rounded-md h-7 px-3 text-sm font-medium transition-all duration-300 ${
               !showPreview
-                ? "bg-primary text-white shadow-sm"
-                : "bg-secondary text-muted-foreground hover:bg-transparent"
+                ? "bg-primary text-primary-foreground shadow-md scale-105"
+                : "bg-transparent text-muted-foreground hover:bg-secondary"
             }`}
             onClick={() => setShowPreview(false)}
           >
-            <Code />
+            Code
           </Button>
-        </div>
 
-        {/* url bar */}
+          <div className="flex items-center space-x-1 pl-2 ml-2 border-l border-border">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 hover:bg-secondary hover:text-accent-foreground transition-colors"
+              title="Reload Project"
+            >
+              <RotateCw className="h-4 w-4" />
+            </Button>
 
-        <div className="border border-primary/50 w-[400px] rounded-full relative flex justify-between items-center px-2">
-          <Input
-            className="size-full focus-visible:ring-0 border-none placeholder:text-muted-foreground/50"
-            placeholder="https://webcontainer.io/todo-app"
-            readOnly
-          />
-
-          <div className="flex space-x-2">
-            <RotateCw
-              className="text-secondary-foreground cursor-pointer"
-              size={13}
-            />
-
-            <SquareArrowOutUpRight
-              className="text-secondary-foreground cursor-pointer"
-              size={13}
-            />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 hover:bg-secondary hover:text-accent-foreground transition-colors"
+              title="Open in New Tab"
+            >
+              <SquareArrowOutUpRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -68,7 +66,7 @@ export function AppPreview() {
       </div>
 
       <IDE className={showPreview ? "hidden" : "flex"} />
-      <PreviewComponent className={showPreview ? "block" : "hidden"} />
+      <PreviewComponent className={showPreview ? "flex" : "hidden"} />
     </div>
   );
 }

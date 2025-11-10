@@ -1,4 +1,5 @@
 import type { TreeNode } from "@/components/builder/tree-view-component";
+import { globalStore } from "@/store/global.store";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
 import type {
   DirectoryNode,
@@ -130,13 +131,17 @@ export function findSiblingNodes(
     .at(0);
 }
 
-export async function setupWebContainer(files: FileSystemTree) {
+export async function installDeps() {
   try {
-    console.log("setting up container");
+    console.log("installing deps container");
     const wc = await WebContainerClass.getWebContainer();
-    await wc.mount(files);
     const installProcess = await wc.spawn("npm", ["i"]);
     const iframeEl = document.querySelector("#iframeEL") as HTMLIFrameElement;
+
+    if (!iframeEl) {
+      console.error("iframeEl not found");
+      return;
+    }
 
     installProcess.output.pipeTo(
       new WritableStream({
@@ -166,9 +171,23 @@ export async function setupWebContainer(files: FileSystemTree) {
     wc.on("server-ready", (_, url) => {
       console.log("feeding url in iframeEL");
       iframeEl.src = url;
+      globalStore.isPreviewLoading = false;
     });
+
+    return { success: true };
   } catch (error) {
-    console.error("Webcontainer setup failed", error);
+    console.error("Failed to install deps", error);
+    return { success: false };
+  }
+}
+
+export async function mountFilesInWebContainer(files: FileSystemTree) {
+  try {
+    console.log("setting up container");
+    const wc = await WebContainerClass.getWebContainer();
+    await wc.mount(files);
+  } catch (error) {
+    console.error("Failed to insert files inside wc", error);
   }
 }
 
@@ -196,35 +215,44 @@ async function writeFileToContainer(filePath: string, fileContent: string) {
 }
 
 export async function updateContainerFiles(files: Record<string, string>[]) {
-  const webcontainer = await WebContainerClass.getWebContainer();
+  try {
+    const webcontainer = await WebContainerClass.getWebContainer();
 
-  const insertionPromise = files.map(async (object) => {
-    const { file_path, file_content } = object;
+    const insertionPromise = files.map(async (object) => {
+      const { file_path, file_content } = object;
 
-    if (!file_path || !file_content) {
-      console.error("file path or content not found", file_path, file_content);
-      return;
-    }
+      if (!file_path || !file_content) {
+        console.error(
+          "file path or content not found",
+          file_path,
+          file_content,
+        );
+        return;
+      }
 
-    const pathSegments = trimPath(file_path);
-    const folderSegments = pathSegments.slice(0, -1);
+      const pathSegments = trimPath(file_path);
+      const folderSegments = pathSegments.slice(0, -1);
 
-    if (!folderSegments.length) {
-      console.log("Writing root file:", file_path);
-      await writeFileToContainer(file_path, file_content);
-      return;
-    }
+      if (!folderSegments.length) {
+        console.log("Writing root file:", file_path);
+        await writeFileToContainer(file_path, file_content);
+        return;
+      }
 
-    const folderPath = `/${folderSegments.join("/")}`;
-    const result = await ensureDirectoryExists(folderPath, webcontainer);
+      const folderPath = `/${folderSegments.join("/")}`;
+      const result = await ensureDirectoryExists(folderPath, webcontainer);
 
-    if (result.success) {
-      await writeFileToContainer(file_path, file_content);
-      console.log("File written:", file_path);
-    }
-  });
+      if (result.success) {
+        await writeFileToContainer(file_path, file_content);
+        console.log("File written:", file_path);
+      }
+    });
 
-  console.log("files inserted successfully");
+    console.log("files inserted successfully");
 
-  await Promise.all(insertionPromise);
+    await Promise.all(insertionPromise);
+    await installDeps();
+  } catch (error) {
+    console.error("Failed to update container files", error);
+  }
 }

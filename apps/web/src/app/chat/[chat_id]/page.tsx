@@ -15,7 +15,7 @@ import {
   updateContainerFiles,
 } from "@/shared/shared";
 import { NextTemplate } from "@/templates/next-template";
-import { DefaultChatTransport, RetryError } from "ai";
+import { DefaultChatTransport } from "ai";
 
 const isValidPath = (path: string | undefined) =>
   path ? filesEx.some((p) => path.includes(p)) : false;
@@ -39,6 +39,16 @@ export default function ChatPage({
       if (event.error) {
         console.error("Website creation failed", event.error);
         return;
+      }
+
+      const completionMessage = event.object?.completion_message;
+
+      if (completionMessage) {
+        pushMessage({
+          id: crypto.randomUUID(),
+          role: "assistant",
+          parts: [{ text: completionMessage, type: "text" }],
+        });
       }
 
       const code = event.object?.code;
@@ -65,7 +75,6 @@ export default function ChatPage({
         }
 
         globalStore.fileTree = structuredFiles;
-
         await installDeps();
       }
     },

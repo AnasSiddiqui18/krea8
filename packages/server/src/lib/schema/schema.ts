@@ -1,7 +1,6 @@
 import z from "zod";
 
 export const fragmentSchema = z.object({
-  
   code: z.array(
     z.object({
       action: z.enum(["creating", "updating"]).describe(`
@@ -19,4 +18,19 @@ export const fragmentSchema = z.object({
       file_content: z.string().describe("Content of the file."),
     }),
   ),
+  completion_message: z.string().describe(`
+  A short, professional completion message (1–2 sentences) displayed to the user once the project generation process is finished.
+
+  The message must:
+  - Explicitly mention the **project name or type** (e.g., "Todo App", "Portfolio Website", "Chat Application").
+  - Briefly describe the **main functionality or benefit** of the generated project.
+  - Clearly state that the **WebContainer or preview environment is still being set up**, and that it will be available shortly.
+  - Maintain a **neutral and professional tone** — do not use emojis, exclamation marks, or overly casual expressions.
+  - Do not use phrases like "successfully generated" or "you can now start using" — instead, describe the current state and next step.
+
+  Examples:
+  - "The Todo App has been generated. It helps you manage daily tasks efficiently. The WebContainer is now initializing and will be ready for preview soon."
+  - "Your Portfolio Website has been generated to showcase your work professionally. The WebContainer is currently setting up and will be accessible shortly."
+  - "The Blog Platform has been generated to help you publish and organize content. The preview environment is in progress and will start automatically once ready."
+`),
 });

@@ -1,4 +1,4 @@
-import { consumeStream, smoothStream, streamObject, streamText } from "ai";
+import { smoothStream, streamObject, streamText } from "ai";
 import { generateWebsitePrompt, initialPrompt } from "../lib/prompt";
 import { model } from "../lib/ai/google";
 import { HTTPException } from "hono/http-exception";
@@ -38,11 +38,13 @@ websiteRouter.post("/create-website", async (c) => {
 
     if (!prompt) throw new HTTPException(400, { message: "Prompt not found" });
 
-    const stream = await streamObject({
+    const stream = streamObject({
       model,
       schema: fragmentSchema,
       prompt: generateWebsitePrompt(prompt),
     });
+
+    console.log("returning response");
 
     return stream.toTextStreamResponse();
   } catch (error) {

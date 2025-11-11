@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { ChevronRight, Folder, File, FolderOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@repo/ui/lib/utils";
@@ -26,9 +26,12 @@ export type TreeViewProps = {
   selectable?: boolean;
   multiSelect?: boolean;
   selectedIds?: string[];
+  selectedFileId: string[];
   onSelectionChange?: (selectedIds: string[]) => void;
   indent?: number;
   animateExpand?: boolean;
+  folderIds: string[] | null;
+  // handleSelection: (nodeId: string) => void;
 };
 
 // Main TreeView component
@@ -37,25 +40,28 @@ export function TreeView({
   className,
   onNodeClick,
   onNodeExpand,
+  folderIds,
   defaultExpandedIds = [],
   showLines = true,
   showIcons = true,
   selectable = true,
   multiSelect = false,
   selectedIds = [],
+  selectedFileId = [],
   onSelectionChange,
   indent = 20,
   animateExpand = true,
 }: TreeViewProps) {
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    new Set(defaultExpandedIds),
-  );
-  const [internalSelectedIds, setInternalSelectedIds] =
-    useState<string[]>(selectedIds);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const isControlled =
     selectedIds !== undefined && onSelectionChange !== undefined;
-  const currentSelectedIds = isControlled ? selectedIds : internalSelectedIds;
+  const currentSelectedIds = isControlled ? selectedIds : selectedFileId;
+
+  useEffect(() => {
+    if (!folderIds) return;
+    setExpandedIds((prev) => new Set([...prev, ...folderIds]));
+  }, [folderIds]);
 
   const toggleExpanded = useCallback(
     (nodeId: string) => {
@@ -68,33 +74,6 @@ export function TreeView({
       });
     },
     [onNodeExpand],
-  );
-
-  const handleSelection = useCallback(
-    (nodeId: string, ctrlKey = false) => {
-      if (!selectable) return;
-
-      let newSelection: string[];
-
-      if (multiSelect && ctrlKey) {
-        newSelection = currentSelectedIds.includes(nodeId)
-          ? currentSelectedIds.filter((id) => id !== nodeId)
-          : [...currentSelectedIds, nodeId];
-      } else {
-        newSelection = currentSelectedIds.includes(nodeId) ? [] : [nodeId];
-      }
-
-      isControlled
-        ? onSelectionChange?.(newSelection)
-        : setInternalSelectedIds(newSelection);
-    },
-    [
-      selectable,
-      multiSelect,
-      currentSelectedIds,
-      isControlled,
-      onSelectionChange,
-    ],
   );
 
   const renderNode = (
@@ -131,7 +110,6 @@ export function TreeView({
           style={{ paddingLeft: level * indent + 8 }}
           onClick={(e) => {
             if (hasChildren) toggleExpanded(node.id);
-            handleSelection(node.id, e.ctrlKey || e.metaKey);
             onNodeClick?.(node);
           }}
           whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}

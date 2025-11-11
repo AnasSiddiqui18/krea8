@@ -1,4 +1,4 @@
-import { TreeView } from "./tree-view-component";
+import { TreeView, type TreeNode } from "./tree-view-component";
 import { CodeEditor } from "../editor/code-editor";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
@@ -7,24 +7,41 @@ import { WebContainerClass } from "@/webcontainer/webcontainer";
 import type { fileTreeStructure } from "@/shared/shared";
 import { cn } from "@repo/ui/lib/utils";
 import { FilePathSelector } from "./file-path-selector";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Breadcrumb, BreadcrumbList } from "@repo/ui/components/breadcrumb";
+
+function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
+  const folderSegments = trimPath(filePath).slice(0, -1);
+  if (!folderSegments.length) return null;
+
+  let currentLevel = rootTree;
+
+  return folderSegments.map((segment) => {
+    const matchingNode = currentLevel.find((node) => node.label === segment);
+    if (!matchingNode) return [];
+    currentLevel = matchingNode.children as TreeNode[];
+    return matchingNode.id;
+  });
+}
 
 type IDEProps = React.ComponentProps<"div">;
 
 export function IDE({ className, ...props }: IDEProps) {
+  const [selectedFileId, setSelectedFileId] = useState<string[]>([]);
   const { fileTree, selectedFile, isPreviewLoading } = useSnapshot(globalStore);
+  const [folderIds, setFolderIds] = useState<string[] | null>(null);
 
   async function handleSelectFile(file: fileTreeStructure) {
     if (file.type !== "file" || !file.path) {
-      console.log("if runs", file.type, file.path);
+      console.log("if runs", file.id);
       return;
     }
 
     const code = (await WebContainerClass.getFile(file.path)) as string;
 
-    console.log("selecting file");
-
+    setSelectedFileId([file.id]);
+    const parentIds = getParentFolderIds(file.path, fileTree) as string[];
+    setFolderIds(parentIds);
     globalStore.selectedFile = { code: code, path: file.path };
   }
 
@@ -53,7 +70,12 @@ export function IDE({ className, ...props }: IDEProps) {
     <div className={cn("h-full flex w-full", className)} {...props}>
       <div className="w-[300px] border border-secondary-foreground/10 h-9">
         {fileTree.length ? (
-          <TreeView data={fileTree} onNodeClick={handleSelectFile} />
+          <TreeView
+            data={fileTree}
+            onNodeClick={handleSelectFile}
+            selectedFileId={selectedFileId}
+            folderIds={folderIds}
+          />
         ) : !fileTree.length && isPreviewLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 py-10 mt-4">
             <div className="relative">

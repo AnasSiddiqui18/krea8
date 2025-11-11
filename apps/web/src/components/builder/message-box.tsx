@@ -1,3 +1,5 @@
+import { globalStore } from "@/store/global.store";
+import { WebContainerClass } from "@/webcontainer/webcontainer";
 import { cn } from "@repo/ui/lib/utils";
 import { FileIcon } from "lucide-react";
 import Markdown from "react-markdown";
@@ -36,7 +38,14 @@ export function MessageBox({ content, role }: any) {
           <span className="font-semibold text-sm">
             {labelMap[action] || "File Event"}
           </span>
-          <span className="text-xs text-gray-500 font-mono cursor-pointer">
+          <span
+            className="text-xs text-gray-500 font-mono cursor-pointer"
+            onClick={async () => {
+              const code = (await WebContainerClass.getFile(path)) as string;
+              console.log("selecting file");
+              globalStore.selectedFile = { code: code, path: path };
+            }}
+          >
             {path}
           </span>
         </span>

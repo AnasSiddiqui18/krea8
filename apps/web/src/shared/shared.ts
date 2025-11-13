@@ -206,7 +206,10 @@ async function ensureDirectoryExists(
   }
 }
 
-async function writeFileToContainer(filePath: string, fileContent: string) {
+export async function writeFileToContainer(
+  filePath: string,
+  fileContent: string,
+) {
   try {
     const webcontainer = await WebContainerClass.getWebContainer();
     await webcontainer.fs.writeFile(filePath, fileContent);
@@ -258,4 +261,34 @@ export async function updateContainerFiles(
   } catch (error) {
     console.error("Failed to update container files", error);
   }
+}
+
+export function extractCodeContent(code: Record<string, string>[]) {
+  return code
+    .map((c) => {
+      const { file_content, file_path } = c;
+
+      if (!file_content || !file_path) {
+        console.error("file path or content not found");
+        return null;
+      }
+
+      const regex = /<coderocketFile[^>]*>([\s\S]*?)<\/coderocketFile>/;
+      const match = file_content.match(regex);
+
+      const object = {
+        file_path,
+      } as Record<string, string>;
+
+      if (match && match[1]) {
+        const updatedContent = match[1];
+        object["file_content"] = updatedContent.trim();
+      } else {
+        console.log(`failed to get content for path`, file_path);
+        object["file_content"] = "file content doesnt matched";
+      }
+
+      return object;
+    })
+    .filter((content): content is Record<string, string> => !!content);
 }

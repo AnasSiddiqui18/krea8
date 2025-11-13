@@ -1,21 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { shikiToMonaco } from "@shikijs/monaco";
 import { createHighlighter } from "shiki";
 import type { editor } from "monaco-editor-core";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
+import { SaveAlert } from "../builder/save-alert";
 
-export function CodeEditor({
-  lang,
-  onChange,
-}: {
-  lang?: string;
-  onChange?: (value: string | undefined) => void;
-}) {
+export function CodeEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor>(null);
-
   const { selectedFile } = useSnapshot(globalStore);
+  const [hasChangeCode, setHasChangeCode] = useState(false);
+
+  function toggleSaveAlert() {
+    setHasChangeCode(!hasChangeCode);
+  }
 
   useEffect(() => {
     (async () => {
@@ -45,6 +44,15 @@ export function CodeEditor({
           fontSize: 14,
           padding: { top: 10, bottom: 10 },
         });
+
+        const model = editorRef.current.getModel();
+
+        model?.onDidChangeContent((e: Record<any, any>) => {
+          if (e?.detailedReasons[0]?.metadata?.source !== "setValue") {
+            //  keyboard change
+            setHasChangeCode(true);
+          }
+        });
       }
     })();
 
@@ -64,5 +72,14 @@ export function CodeEditor({
     }
   }, [selectedFile.code]);
 
-  return <div ref={containerRef} className="h-full" />;
+  return (
+    <>
+      <div ref={containerRef} className="h-full" />
+      <SaveAlert
+        editorRef={editorRef}
+        toggleSaveAlert={toggleSaveAlert}
+        hasChangeCode={hasChangeCode}
+      />
+    </>
+  );
 }

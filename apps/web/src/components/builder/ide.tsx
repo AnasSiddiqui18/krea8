@@ -9,6 +9,9 @@ import { cn } from "@repo/ui/lib/utils";
 import { FilePathSelector } from "./file-path-selector";
 import { useMemo, useState } from "react";
 import { Breadcrumb, BreadcrumbList } from "@repo/ui/components/breadcrumb";
+import { TriangleAlert } from "lucide-react";
+import { Button } from "@repo/ui/components/button";
+import { SaveAlert } from "./save-alert";
 
 function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
   const folderSegments = trimPath(filePath).slice(0, -1);
@@ -27,7 +30,7 @@ function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
 type IDEProps = React.ComponentProps<"div">;
 
 export function IDE({ className, ...props }: IDEProps) {
-  const [selectedFileId, setSelectedFileId] = useState<string[]>([]);
+  const [selectedFileId, setSelectedFileId] = useState("");
   const { fileTree, selectedFile, isPreviewLoading } = useSnapshot(globalStore);
   const [folderIds, setFolderIds] = useState<string[] | null>(null);
 
@@ -39,10 +42,13 @@ export function IDE({ className, ...props }: IDEProps) {
 
     const code = (await WebContainerClass.getFile(file.path)) as string;
 
-    setSelectedFileId([file.id]);
+    setSelectedFileId(file.id);
     const parentIds = getParentFolderIds(file.path, fileTree) as string[];
     setFolderIds(parentIds);
-    globalStore.selectedFile = { code: code, path: file.path };
+    globalStore.selectedFile = {
+      code: code,
+      path: file.path,
+    };
   }
 
   const path = useMemo(() => {

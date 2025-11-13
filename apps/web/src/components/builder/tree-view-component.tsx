@@ -26,7 +26,7 @@ export type TreeViewProps = {
   selectable?: boolean;
   multiSelect?: boolean;
   selectedIds?: string[];
-  selectedFileId: string[];
+  selectedFileId: string;
   onSelectionChange?: (selectedIds: string[]) => void;
   indent?: number;
   animateExpand?: boolean;
@@ -47,7 +47,7 @@ export function TreeView({
   selectable = true,
   multiSelect = false,
   selectedIds = [],
-  selectedFileId = [],
+  selectedFileId,
   onSelectionChange,
   indent = 20,
   animateExpand = true,

@@ -22,7 +22,11 @@ export const fragmentSchema = z.object({
       file_path: z
         .string()
         .describe("Relative path to the file, including the file name."),
-      file_content: z.string().describe("Content of the file."),
+      file_content: z
+        .string()
+        .describe(
+          "actual code content of the corresponding file, wrapped in a coderocketFile tag",
+        ),
     }),
   ),
   completion_message: z.string().describe(`

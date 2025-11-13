@@ -10,6 +10,7 @@ import { filesEx, projectFiles } from "@/data/data";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { fragmentSchema } from "@/schema/schema";
 import {
+  extractCodeContent,
   installDeps,
   mountTemplateFilesInWebContainer,
   updateContainerFiles,
@@ -65,9 +66,14 @@ export default function ChatPage({
           }
         });
 
+        const refinedCode = extractCodeContent(code);
+
         console.log("updating container files");
 
-        const structuredFiles = await updateContainerFiles(code, projectFiles);
+        const structuredFiles = await updateContainerFiles(
+          refinedCode,
+          projectFiles,
+        );
 
         if (!structuredFiles) {
           console.error("Failed to update files inside container");

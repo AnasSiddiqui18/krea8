@@ -48,6 +48,8 @@ websiteRouter.post("/create-website", async (c) => {
 
     return stream.toTextStreamResponse();
   } catch (error) {
+    console.error("failed to create website", error);
+
     throw new HTTPException(400, { message: "Failed to create website" });
   }
 });

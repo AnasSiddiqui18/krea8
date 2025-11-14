@@ -1,0 +1,62 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - actions-test
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # optional: ensure known_hosts contains the host fingerprint (you may prefer to manage this out-of-band)
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        env:
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          # Pipe a script to the remote host to avoid quoting problems and preserve newlines
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes "$EC2_USER@$EC2_HOST" bash -s <<'REMOTE_SCRIPT'
+            set -euo pipefail
+
+            # Ensure NVM is installed (idempotent)
+            export NVM_DIR="$HOME/.nvm"
+            if [ ! -d "$NVM_DIR" ]; then
+              echo "Installing nvm..."
+              curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+            fi
+
+            # Load nvm for this non-login shell
+            if [ -s "$NVM_DIR/nvm.sh" ]; then
+              . "$NVM_DIR/nvm.sh"
+            else
+              echo "ERROR: nvm not found after install"
+              exit 1
+            fi
+
+            # Install and use specified Node version (change '22' if you need another)
+            echo "Installing/using Node 22..."
+            nvm install 22 --latest-npm
+            nvm use 22
+
+            # Ensure repo exists and is on the actions-test branch (fetch & reset to remote)
+            if [ ! -d /home/ubuntu/krea8 ]; then
+              git clone https://github.com/AnasSiddiqui18/krea8.git /home/ubuntu/krea8
+            fi
+
+            cd /home/ubuntu/krea8
+
+            echo "Deployment script finished successfully."
+          REMOTE_SCRIPT

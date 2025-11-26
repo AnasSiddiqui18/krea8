@@ -1,9 +1,10 @@
-import { smoothStream, streamObject, streamText } from "ai";
+import { consumeStream, smoothStream, streamObject, streamText } from "ai";
 import { generateWebsitePrompt, initialPrompt } from "../lib/prompt";
 import { model } from "../lib/ai/google";
 import { HTTPException } from "hono/http-exception";
 import { fragmentSchema } from "@/lib/schema/schema";
 import { Hono } from "hono";
+import { getAvailablePort } from "@/helpers/helpers";
 
 export const websiteRouter = new Hono();
 
@@ -24,7 +25,16 @@ websiteRouter.post("/init", async (c) => {
       }),
     });
 
-    return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse({
+      onFinish: ({ isAborted }) => {
+        if (isAborted) {
+          console.log("stream aborted");
+        } else {
+          console.log("stream closed normally");
+        }
+      },
+      consumeSseStream: consumeStream,
+    });
   } catch (error) {
     throw new HTTPException(400, { message: "Failed to init website" });
   }
@@ -38,18 +48,26 @@ websiteRouter.post("/create-website", async (c) => {
 
     if (!prompt) throw new HTTPException(400, { message: "Prompt not found" });
 
+    const port = await getAvailablePort();
+
+    if (!port.success) {
+      return c.json({
+        success: false,
+        message: "Website creation failed!! Failed to get port",
+      });
+    }
+
     const stream = streamObject({
       model,
       schema: fragmentSchema,
-      prompt: generateWebsitePrompt(prompt),
+      prompt: generateWebsitePrompt(prompt, String(port.data)),
     });
 
     console.log("returning response");
 
     return stream.toTextStreamResponse();
   } catch (error) {
-    console.error("failed to create website", error);
-
+    console.error("website creation failed", error);
     throw new HTTPException(400, { message: "Failed to create website" });
   }
 });

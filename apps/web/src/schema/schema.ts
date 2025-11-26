@@ -3,11 +3,17 @@ import z from "zod";
 export const initialPromptSchema = z.object({
   initial_prompt: z
     .string()
-    .min(5, { message: "Prompt must be of 5 chars max" })
-    .max(150, { message: "Prompt should be max of 150 chars" }),
+    .min(5, { message: "Prompt must be of 5 chars max" }),
+  // .max(150, { message: "Prompt should be max of 150 chars" }),
 });
 
 export const fragmentSchema = z.object({
+  // commentary: z
+  //   .string()
+  //   .describe(
+  //     `Describe what you're about to do and the steps you want to take for generating the fragment in great detail.`,
+  //   ),
+
   code: z.array(
     z.object({
       action: z.enum(["creating", "updating"]).describe(`

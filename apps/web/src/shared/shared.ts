@@ -1,12 +1,12 @@
 import type { TreeNode } from "@/components/builder/tree-view-component";
 import { globalStore } from "@/store/global.store";
+import { NextTemplate } from "@/templates/next-template";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
 import type {
   DirectoryNode,
   FileSystemTree,
   WebContainer,
 } from "@webcontainer/api";
-import { writeFileSync } from "fs";
 
 export type fileTreeStructure = TreeNode & { path?: string };
 
@@ -239,7 +239,6 @@ export async function updateContainerFiles(
 
       const pathSegments = trimPath(file_path);
       const folderSegments = pathSegments.slice(0, -1);
-
       if (!folderSegments.length) {
         console.log("Writing root file:", file_path);
         await writeFileToContainer(file_path, file_content);
@@ -264,31 +263,86 @@ export async function updateContainerFiles(
 }
 
 export function extractCodeContent(code: Record<string, string>[]) {
-  return code
-    .map((c) => {
-      const { file_content, file_path } = c;
+  const object = { ...NextTemplate };
 
-      if (!file_content || !file_path) {
-        console.error("file path or content not found");
-        return null;
-      }
+  code.forEach((c) => {
+    const { file_content, file_path } = c;
 
-      const regex = /<coderocketFile[^>]*>([\s\S]*?)<\/coderocketFile>/;
-      const match = file_content.match(regex);
+    if (!file_content || !file_path) {
+      console.error("file path or content not found");
+      return null;
+    }
 
-      const object = {
-        file_path,
-      } as Record<string, string>;
+    const regex = /<coderocketFile[^>]*>([\s\S]*?)<\/coderocketFile>/;
+    const match = file_content.match(regex);
 
-      if (match && match[1]) {
-        const updatedContent = match[1];
-        object["file_content"] = updatedContent.trim();
-      } else {
-        console.log(`failed to get content for path`, file_path);
-        object["file_content"] = "file content doesnt matched";
-      }
+    // TODO maybe instruct the llm to wrap the code content inside coderocketFile tag
 
-      return object;
-    })
-    .filter((content): content is Record<string, string> => !!content);
+    if (match && match[1]) {
+      object[file_path] = match[1];
+    } else {
+      console.log(`failed to get content for path`, file_path);
+      // object["file_content"] = "";
+      object[file_path] = file_content;
+    }
+  });
+
+  return object;
+}
+
+export function objectToForm<
+  T extends Record<string, string | File | null | undefined | boolean>,
+>(object: T) {
+  const formData = new FormData();
+
+  for (const key in object) {
+    if (object[key] instanceof File) {
+      formData.append(key, object[key] ?? "");
+    } else {
+      formData.append(key, object[key]?.toString() ?? "");
+    }
+  }
+
+  return formData;
+}
+
+// TODO fix the flow
+
+export function convertObjToArr(obj: Record<string, string>) {
+  const arr: any[] = [];
+
+  Object.entries(obj).forEach(([path]) => {
+    arr.push({
+      file_path: path,
+    });
+  });
+
+  return arr;
+}
+
+export function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
+  const pathSegments = trimPath(filePath);
+  if (!pathSegments.length) return null;
+
+  const result: { fileId: string | null; parentFolderIds: string[] } = {
+    fileId: null,
+    parentFolderIds: [],
+  };
+
+  let currentNodes = rootTree;
+
+  pathSegments.forEach((segment, index) => {
+    const node = currentNodes.find((n) => n.label === segment);
+    if (!node) return;
+
+    result.parentFolderIds.push(node.id);
+
+    if (index === pathSegments.length - 1) {
+      result.fileId = node.id;
+    }
+
+    currentNodes = node.children as TreeNode[];
+  });
+
+  return result;
 }

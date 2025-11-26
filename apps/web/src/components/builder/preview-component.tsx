@@ -19,7 +19,6 @@ export function PreviewComponent({
         id="iframeEL"
         className={cn("h-full w-full hidden", !isPreviewLoading && "block")}
       />
-
       <div
         className={cn(
           "flex-col items-center justify-center gap-3 py-10 hidden",
@@ -31,7 +30,7 @@ export function PreviewComponent({
         </div>
         <div className="flex flex-col items-center text-center text-secondary-foreground">
           <span className="animate-pulse">
-            Initializing Webcontainer, please wait
+            Initializing Preview, please wait
           </span>
         </div>
       </div>

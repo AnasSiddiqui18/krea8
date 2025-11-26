@@ -1,5 +1,7 @@
+import { useSnapshot } from "@/hooks/use-snapshot";
+import { sandbox } from "@/queries/sandbox.queries";
+import { getParentFolderIds } from "@/shared/shared";
 import { globalStore } from "@/store/global.store";
-import { WebContainerClass } from "@/webcontainer/webcontainer";
 import { cn } from "@repo/ui/lib/utils";
 import { FileIcon } from "lucide-react";
 import Markdown from "react-markdown";
@@ -7,6 +9,8 @@ import rehypeRaw from "rehype-raw";
 
 export function MessageBox({ content, role }: any) {
   const FileEvent = ({ action, path }: { action: string; path: string }) => {
+    const { sbxId, fileTree } = useSnapshot(globalStore);
+
     const actionStyles: Record<string, string> = {
       creating: "border-yellow-500 bg-yellow-50 text-yellow-800",
       updating: "border-orange-500 bg-orange-50 text-orange-800",
@@ -41,9 +45,31 @@ export function MessageBox({ content, role }: any) {
           <span
             className="text-xs text-gray-500 font-mono cursor-pointer"
             onClick={async () => {
-              const code = (await WebContainerClass.getFile(path)) as string;
-              console.log("selecting file");
-              globalStore.selectedFile = { code: code, path: path };
+              if (!sbxId) {
+                console.error("File selection failed, sandbox id not found");
+                return;
+              }
+
+              const code = await sandbox.getFile(path, sbxId);
+
+              if (!code.success) {
+                console.error("Failed to get file");
+                return;
+              }
+
+              const obj = getParentFolderIds(path, fileTree);
+
+              if (!obj) {
+                console.error("failed to select file");
+                return;
+              }
+
+              globalStore.selectedFile = {
+                code: code.file,
+                path: path,
+                parentFolders: obj.parentFolderIds as string[],
+                id: obj.fileId as string,
+              };
             }}
           >
             {path}

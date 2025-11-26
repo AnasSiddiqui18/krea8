@@ -15,7 +15,7 @@ async function headers() {
 const nextConfig = {
   devIndicators: false,
 
-  headers,
+  // headers,
 };
 
 export default nextConfig;

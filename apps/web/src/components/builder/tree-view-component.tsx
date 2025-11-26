@@ -4,6 +4,8 @@ import React, { useState, useCallback, useEffect } from "react";
 import { ChevronRight, Folder, File, FolderOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@repo/ui/lib/utils";
+import { useSnapshot } from "@/hooks/use-snapshot";
+import { globalStore } from "@/store/global.store";
 
 // Types
 export type TreeNode = {
@@ -25,12 +27,11 @@ export type TreeViewProps = {
   showIcons?: boolean;
   selectable?: boolean;
   multiSelect?: boolean;
-  selectedIds?: string[];
-  selectedFileId: string;
+  // selectedIds?: string[];
   onSelectionChange?: (selectedIds: string[]) => void;
   indent?: number;
   animateExpand?: boolean;
-  folderIds: string[] | null;
+  // folderIds: string[] | null;
   // handleSelection: (nodeId: string) => void;
 };
 
@@ -40,28 +41,35 @@ export function TreeView({
   className,
   onNodeClick,
   onNodeExpand,
-  folderIds,
+  // folderIds,
+  // selectedIds = [],
   defaultExpandedIds = [],
   showLines = true,
   showIcons = true,
   selectable = true,
   multiSelect = false,
-  selectedIds = [],
-  selectedFileId,
   onSelectionChange,
   indent = 20,
   animateExpand = true,
 }: TreeViewProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const isControlled =
-    selectedIds !== undefined && onSelectionChange !== undefined;
-  const currentSelectedIds = isControlled ? selectedIds : selectedFileId;
+  const { selectedFile } = useSnapshot(globalStore);
+
+  // const isControlled =
+  //   selectedFile.parentFolders !== undefined && onSelectionChange !== undefined;
+
+  // const currentSelectedIds = isControlled
+  //   ? selectedFile.parentFolders
+  //   : selectedFile.id;
 
   useEffect(() => {
-    if (!folderIds) return;
-    setExpandedIds((prev) => new Set([...prev, ...folderIds]));
-  }, [folderIds]);
+    if (!selectedFile.parentFolders) return;
+
+    setExpandedIds(
+      (prev) => new Set([...prev, ...(selectedFile.parentFolders as string[])]),
+    );
+  }, [selectedFile.parentFolders]);
 
   const toggleExpanded = useCallback(
     (nodeId: string) => {
@@ -84,7 +92,7 @@ export function TreeView({
   ) => {
     const hasChildren = (node.children?.length ?? 0) > 0;
     const isExpanded = expandedIds.has(node.id);
-    const isSelected = currentSelectedIds.includes(node.id);
+    const isSelected = selectedFile.id === node.id;
     const currentPath = [...parentPath, isLast];
 
     const getDefaultIcon = () =>

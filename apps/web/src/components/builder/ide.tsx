@@ -2,7 +2,11 @@ import { TreeView, type TreeNode } from "./tree-view-component";
 import { CodeEditor } from "../editor/code-editor";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
-import { findSiblingNodes, trimPath } from "@/shared/shared";
+import {
+  findSiblingNodes,
+  getParentFolderIds,
+  trimPath,
+} from "@/shared/shared";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
 import type { fileTreeStructure } from "@/shared/shared";
 import { cn } from "@repo/ui/lib/utils";
@@ -12,42 +16,45 @@ import { Breadcrumb, BreadcrumbList } from "@repo/ui/components/breadcrumb";
 import { TriangleAlert } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { SaveAlert } from "./save-alert";
-
-function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
-  const folderSegments = trimPath(filePath).slice(0, -1);
-  if (!folderSegments.length) return null;
-
-  let currentLevel = rootTree;
-
-  return folderSegments.map((segment) => {
-    const matchingNode = currentLevel.find((node) => node.label === segment);
-    if (!matchingNode) return [];
-    currentLevel = matchingNode.children as TreeNode[];
-    return matchingNode.id;
-  });
-}
+import { sandbox } from "@/queries/sandbox.queries";
 
 type IDEProps = React.ComponentProps<"div">;
 
 export function IDE({ className, ...props }: IDEProps) {
   const [selectedFileId, setSelectedFileId] = useState("");
-  const { fileTree, selectedFile, isPreviewLoading } = useSnapshot(globalStore);
-  const [folderIds, setFolderIds] = useState<string[] | null>(null);
+  const { fileTree, selectedFile, isPreviewLoading, sbxId } =
+    useSnapshot(globalStore);
+  // const [folderIds, setFolderIds] = useState<string[] | null>(null);
 
   async function handleSelectFile(file: fileTreeStructure) {
-    if (file.type !== "file" || !file.path) {
-      console.log("if runs", file.id);
+    if (!sbxId) {
+      console.log("sbxId not found");
       return;
     }
 
-    const code = (await WebContainerClass.getFile(file.path)) as string;
+    if (file.type !== "file" || !file.path) return;
 
-    setSelectedFileId(file.id);
-    const parentIds = getParentFolderIds(file.path, fileTree) as string[];
-    setFolderIds(parentIds);
+    const code = await sandbox.getFile(file.path, sbxId);
+
+    if (code !== null && !code.success) {
+      console.log("failed to get code from server");
+      return;
+    }
+
+    // setSelectedFileId(file.id);
+    const obj = getParentFolderIds(file.path, fileTree);
+
+    if (!obj) {
+      console.error("failed to select file");
+      return;
+    }
+
+    // setFolderIds(parentIds);
     globalStore.selectedFile = {
-      code: code,
+      code: code.file,
       path: file.path,
+      parentFolders: obj.parentFolderIds as string[],
+      id: file.id,
     };
   }
 
@@ -76,12 +83,7 @@ export function IDE({ className, ...props }: IDEProps) {
     <div className={cn("h-full flex w-full", className)} {...props}>
       <div className="w-[300px] border border-secondary-foreground/10 h-9">
         {fileTree.length ? (
-          <TreeView
-            data={fileTree}
-            onNodeClick={handleSelectFile}
-            selectedFileId={selectedFileId}
-            folderIds={folderIds}
-          />
+          <TreeView data={fileTree} onNodeClick={handleSelectFile} />
         ) : !fileTree.length && isPreviewLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 py-10 mt-4">
             <div className="relative">

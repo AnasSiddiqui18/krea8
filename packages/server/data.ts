@@ -1,5 +1,91 @@
+export const filesEx = [
+  // Code files
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".rs",
+  ".py",
+  ".go",
+  ".java",
+  ".cpp",
+  ".c",
+  ".cs",
+  ".swift",
+  ".rb",
+  ".php",
+
+  // Config files
+  ".config.ts",
+  ".config.js",
+  ".config.mjs",
+  ".config.cjs",
+  ".json",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".ini",
+
+  // Markdown & docs
+  ".md",
+  ".MD",
+  ".mdx",
+  ".txt",
+  ".log",
+  ".csv",
+
+  // Style files
+  ".css",
+  ".scss",
+  ".sass",
+  ".less",
+  ".styl",
+
+  // Environment & ignore files
+  ".env",
+  ".env.local",
+  ".env.development",
+  ".env.production",
+  ".gitignore",
+  ".gitattributes",
+
+  // Build / meta files
+  ".lock",
+  ".lockb",
+  ".babelrc",
+  ".eslintrc",
+  ".prettierrc",
+  ".editorconfig",
+
+  // Binary / media files
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".svg",
+  ".ico",
+  ".webp",
+  ".avif",
+  ".mp3",
+  ".mp4",
+  ".mov",
+  ".wav",
+  ".webm",
+  ".pdf",
+  ".zip",
+  ".tar",
+  ".gz",
+
+  // Misc
+  ".dockerfile",
+  ".dockerignore",
+  ".sh",
+  ".bat",
+  ".ps1",
+];
+
 export const NextTemplate = {
-  "src/app/layout.tsx": `import "./globals.css";
+  "/src/app/layout.tsx": `import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
@@ -25,7 +111,7 @@ export default function RootLayout({
     </html>
   );
 }`,
-  "src/app/page.tsx": `export default function Home() {
+  "/src/app/page.tsx": `export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <h1 className="text-3xl font-bold tracking-tight text-gray-900">
@@ -38,14 +124,9 @@ export default function RootLayout({
   );
 }`,
 
-  "src/app/globals.css": `@tailwind base;
+  "/src/app/globals.css": `@tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-* {
-  scroll-behavior: smooth;
-}
-
 
 :root {
   --background: #ffffff;
@@ -60,8 +141,7 @@ body {
   margin: 0;
   padding: 0;
 }`,
-
-  "tailwind.config.mjs": `const config= {
+  "/tailwind.config.ts": `const config= {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -79,7 +159,7 @@ body {
 
 export default config;`,
 
-  "postcss.config.mjs": `/** @type {import('postcss-load-config').Config} */
+  "/postcss.config.mjs": `/** @type {import('postcss-load-config').Config} */
 const config = {
   plugins: {
     tailwindcss: {},
@@ -89,7 +169,7 @@ const config = {
 
 export default config;`,
 
-  "tsconfig.json": `{
+  "/tsconfig.json": `{
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -113,12 +193,12 @@ export default config;`,
   "exclude": ["node_modules"]
 }`,
 
-  "package.json": `{
+  "/package.json": `{
   "name": "nextjs-starter",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3002",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -140,4 +220,4 @@ export default config;`,
     "typescript": "^5"
   }
 }`,
-} as Record<string, string>;
+};

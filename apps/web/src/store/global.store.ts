@@ -8,8 +8,11 @@ interface Store {
   selectedFile: Partial<{
     code: string;
     path: string;
+    parentFolders: string[];
+    id: string;
   }>;
   isPreviewLoading: boolean;
+  sbxId: string | null;
 }
 
 export const globalStore = proxy<Store>({
@@ -17,6 +20,7 @@ export const globalStore = proxy<Store>({
   fileTree: [],
   selectedFile: {},
   isPreviewLoading: false,
+  sbxId: null,
 });
 
 devtools(globalStore);

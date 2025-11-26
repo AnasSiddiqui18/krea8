@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
 import { writeFileToContainer } from "@/shared/shared";
+import { sandbox } from "@/queries/sandbox.queries";
 
 export function SaveAlert({
   editorRef,
@@ -16,7 +17,7 @@ export function SaveAlert({
   toggleSaveAlert: () => void;
   hasChangeCode: boolean;
 }) {
-  const { selectedFile } = useSnapshot(globalStore);
+  const { selectedFile, sbxId } = useSnapshot(globalStore);
 
   function resetChanges() {
     const code = globalStore.selectedFile.code;
@@ -35,11 +36,14 @@ export function SaveAlert({
       const filePath = selectedFile.path;
       const updatedCode = editorRef.current?.getValue();
 
-      if (!filePath || !updatedCode)
-        return console.error("File path or current code not found");
+      if (!filePath || !updatedCode || !sbxId)
+        return console.error(
+          "File path OR sandbox id OR current code not found",
+        );
 
       globalStore.selectedFile.code = updatedCode;
-      await writeFileToContainer(filePath, updatedCode);
+
+      await sandbox.updateFile(filePath, sbxId, updatedCode);
 
       toggleSaveAlert();
     } catch (error) {

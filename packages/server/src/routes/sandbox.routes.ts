@@ -6,10 +6,6 @@ import {
   updateFile,
 } from "@/helpers/helpers";
 import { Sandbox } from "@/docker/sandbox";
-import { generateText, streamText, tool } from "ai";
-
-import z from "zod";
-import { model } from "@/lib/ai/google";
 
 export const sandboxRouter = new Hono();
 
@@ -186,40 +182,5 @@ sandboxRouter.patch("/file/:sbxId", async (c) => {
       sucess: false,
       message: "failed to update file",
     });
-  }
-});
-
-sandboxRouter.get("/tool", async (c) => {
-  try {
-    const { response } = await generateText({
-      model: model,
-      tools: {
-        getPort: tool({
-          description: "Get the next available port",
-          inputSchema: z.object({
-            query: z
-              .string()
-              .describe("User query asking about the available port"),
-          }),
-          outputSchema: z.object({
-            port: z.number(),
-          }),
-          execute: async () => {
-            const port = await getAvailablePort();
-
-            return { port: port?.data };
-          },
-        }),
-      },
-      prompt: "What is the next available port?",
-    });
-
-    const data = response.messages
-      .find((tool) => tool.role === "tool")
-      ?.content.at(-1)?.output.value;
-
-    return c.json({ data });
-  } catch (error) {
-    console.log("failed to execute tool call", error);
   }
 });

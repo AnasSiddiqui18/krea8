@@ -1,3 +1,4 @@
+import { NextTemplate } from "data";
 import z from "zod";
 
 export function toPrompt(initial_prompt: string) {
@@ -322,17 +323,97 @@ export default function Page() {
 
 *IMAGE USAGE (STRICT)*
 
-Whenever using images, you must ALWAYS use the standard HTML <img> tag. Never use the Next.js <Image> component and never import next/image.
-All images must use placeholder URLs from https://placehold.co only. Do NOT use real images or any external URLs other than https://placehold.co
 
-The required placeholder image format is: https://placehold.co/{WIDTH}x{HEIGHT}/{BACKGROUND_HEX}/{TEXT_HEX}/png?text={TITLE_TEXT}
+────────────────────────────────────────
+IMAGE SELECTION RULES (VERY STRICT)
+────────────────────────────────────────
 
-Rules:
-- WIDTHxHEIGHT should match the component's expected dimensions (default: 1920x1080 if unspecified).
-- BACKGROUND_HEX should be a color that matches the theme of the product (e.g., candy = f8e9a1, strawberry = ff6384, grape = 7d3cff).
-- TEXT_HEX should always be high-contrast to the background (usually "ffffff").
-- TITLE_TEXT should use "+" instead of spaces and reflect the product name (e.g., "Jelly+Beans+Mix").
-- If no product name exists, use 'Placeholder+Image'. Absolutely no deviations, no imports, no Next.js image optimization, no auto transformations. Only <img> with the required placeholder URL.
+You are given an image ID data structure:
+
+const imagePool = {
+  team: [177, 65, 91, 203, 188, 27, 22, 64, 65, 91, 177, 281, 338, 349, 399, 447, 446, 473, 633, 646, 661, 665, 669, 885, 978, 996, 1005, 1011],
+  tech: [26, 6, 8, 9, 0, 48, 180, 201, 250, 370, 435, 445, 531, 532],
+  nature: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 29, 28, 25, 33, 37, 38, 57, 66, 67, 70, 71, 89, 90, 92, 94, 95, 120, 121, 213, 278, 313, 379, 410, 411, 695, 702, 744, 916, 1050],
+  vehicles: [514, 605, 757, 804, 892, 1013, 1070, 1071, 1072, 133, 183, 146],
+  animals: [1084, 1062, 1074, 1025, 1024, 1012, 1003, 837, 783, 718],
+};
+
+────────────────────────────────────────
+HOW TO CHOOSE IMAGE IDS
+────────────────────────────────────────
+
+When generating a component that needs images, ALWAYS:
+
+1. **Identify the most relevant category** based on context:
+   - team, people, staff, employees → use "imagePool.team"
+   - tech, software, apps, UI, computers → use "imagePool.tech"
+   - nature, outdoors, plants → use "imagePool.nature"
+   - cars, bikes, transport → use "imagePool.vehicles"
+   - animals, pets → use "imagePool.animals"
+
+2. If the category is recognized:
+   - Pull IDs IN ORDER from the corresponding array.
+   - If you need 4 images, take the first 4 IDs from that category.
+   - If you need more than available, loop the array.
+
+3. If NO category matches:
+   - Generate a RANDOM ID from **0–1000**.
+
+4. NEVER invent IDs.  
+5. NEVER mix categories unless explicitly required.
+
+────────────────────────────────────────
+IMAGE URL RULE (EXTREMELY STRICT)
+────────────────────────────────────────
+
+All images MUST use EXACTLY this format:
+
+<img 
+  src="https://picsum.photos/id/{ID}/{WIDTH}/{HEIGHT}" 
+  alt="Descriptive alt text"
+/>
+
+Where:
+- "{ID}" = selected id from the rules above  
+- "{WIDTH}" and "{HEIGHT}" = expected dimensions  
+  - Default: 1920/1080 if undefined  
+- You MUST include "alt" text  
+- STRICTLY no Next.js <Image>, no imports, no other URL  
+- NO placeholder.co, use ONLY picsum.photos now
+
+────────────────────────────────────────
+EXAMPLE (VERY IMPORTANT)
+────────────────────────────────────────
+
+If you generate a “Our Team” section with 4 members:
+
+Category = "team" → use imagePool.team
+
+imagePool.team = [177, 65, 91, 203, ...]
+
+So you MUST output:
+
+<img src="https://picsum.photos/id/177/400/400" alt="Team member" />
+<img src="https://picsum.photos/id/65/400/400" alt="Team member" />
+<img src="https://picsum.photos/id/91/400/400" alt="Team member" />
+<img src="https://picsum.photos/id/203/400/400" alt="Team member" />
+
+No exceptions.
+
+────────────────────────────────────────
+PURPOSE
+────────────────────────────────────────
+
+This prompt is used inside an LLM that creates or updates code files.  
+Whenever the LLM adds or modifies any image, it MUST follow all rules above.
+
+If a section clearly implies a category (team, nature, tech, animals, vehicles),  
+use the corresponding IDs.  
+If unclear, fallback to a random ID in range 0–1000.
+
+NEVER violate the rules.
+
+Return ONLY the generated or updated code.
 
 *PORT USAGE (STRICT IMMUTABLE JSON MODE — ZERO TOLERANCE)*
 

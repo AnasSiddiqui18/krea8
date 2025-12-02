@@ -1,10 +1,19 @@
 import { consumeStream, smoothStream, streamObject, streamText } from "ai";
-import { generateWebsitePrompt, initialPrompt } from "../lib/prompt";
+import {
+  generateWebsitePrompt,
+  initialPrompt,
+  updateWebsitePrompt,
+} from "../lib/prompt";
 import { model } from "../lib/ai/google";
 import { HTTPException } from "hono/http-exception";
-import { fragmentSchema } from "@/lib/schema/schema";
+import { fragmentSchema, websiteUpdateSchema } from "@/lib/schema/schema";
 import { Hono } from "hono";
-import { getAvailablePort } from "@/helpers/helpers";
+import {
+  getAvailablePort,
+  getProjectStructure,
+  updateOrCreateFiles,
+} from "@/helpers/helpers";
+import { NextTemplate } from "data";
 
 export const websiteRouter = new Hono();
 
@@ -60,7 +69,7 @@ websiteRouter.post("/create-website", async (c) => {
     const stream = streamObject({
       model,
       schema: fragmentSchema,
-      prompt: generateWebsitePrompt(prompt, String(port.data)),
+      prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate),
     });
 
     console.log("returning response");
@@ -69,5 +78,41 @@ websiteRouter.post("/create-website", async (c) => {
   } catch (error) {
     console.error("website creation failed", error);
     throw new HTTPException(400, { message: "Failed to create website" });
+  }
+});
+
+websiteRouter.patch("/update-website/:sbxId", async (c) => {
+  try {
+    const { sbxId } = c.req.param();
+    const { prompt } = await c.req.json();
+
+    console.log("update prompt", prompt);
+
+    const projectFiles = getProjectStructure(sbxId);
+
+    const stream = streamObject({
+      model: model,
+      prompt: updateWebsitePrompt(projectFiles, prompt),
+      schema: websiteUpdateSchema,
+      onError: (err) => {
+        console.log("failed to update website", err);
+      },
+
+      onFinish: (updatedContent) => {
+        if (!updatedContent.object)
+          return console.log("updated content is undefined");
+
+        updateOrCreateFiles(updatedContent.object.code, sbxId);
+      },
+    });
+
+    console.log("returning update response....");
+
+    return stream.toTextStreamResponse();
+  } catch (error) {
+    return c.json({
+      sucess: false,
+      message: "failed to update file",
+    });
   }
 });

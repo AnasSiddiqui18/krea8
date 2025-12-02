@@ -42,7 +42,7 @@ export default function RootLayout({
 @tailwind components;
 @tailwind utilities;
 
-* {
+html {
   scroll-behavior: smooth;
 }
 
@@ -88,7 +88,6 @@ const config = {
 };
 
 export default config;`,
-
   "tsconfig.json": `{
   "compilerOptions": {
     "target": "ES2017",
@@ -124,6 +123,7 @@ export default config;`,
     "lint": "next lint"
   },
   "dependencies": {
+    "lucide-react": "^0.548.0",
     "autoprefixer": "^10.4.21",
     "next": "15.1.3",
     "react": "^19.0.0",

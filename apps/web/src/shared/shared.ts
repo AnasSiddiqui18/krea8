@@ -1,4 +1,5 @@
 import type { TreeNode } from "@/components/builder/tree-view-component";
+import { filesEx } from "@/data/data";
 import { globalStore } from "@/store/global.store";
 import { NextTemplate } from "@/templates/next-template";
 import { WebContainerClass } from "@/webcontainer/webcontainer";
@@ -346,3 +347,6 @@ export function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
 
   return result;
 }
+
+export const isValidPath = (path: string | undefined) =>
+  path ? filesEx.some((p) => path.includes(p)) : false;

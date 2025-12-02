@@ -13,11 +13,17 @@ interface Store {
   }>;
   isPreviewLoading: boolean;
   sbxId: string | null;
+  filesGenerated: {
+    name: string;
+    action: "updated" | "created";
+    path: string;
+  }[];
 }
 
 export const globalStore = proxy<Store>({
   initial_prompt: null,
   fileTree: [],
+  filesGenerated: [],
   selectedFile: {},
   isPreviewLoading: false,
   sbxId: null,

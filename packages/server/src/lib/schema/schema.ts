@@ -38,3 +38,58 @@ export const fragmentSchema = z.object({
   - "The Blog Platform has been generated to help you publish and organize content. The preview environment is in progress and will start automatically once ready."
 `),
 });
+
+export const websiteUpdatePlanSchema = z.object({
+  actionFiles: z
+    .array(
+      z.object({
+        action: z
+          .literal(["update", "create", "delete"])
+          .describe(
+            "Action to perform on the file. 'update' = modify existing, 'create' = add new, 'delete' = remove",
+          ),
+        path: z
+          .string()
+          .describe(
+            "Exact file path inside the project. For 'update' or 'delete', path must exist. For 'create', path must be valid and new.",
+          ),
+      }),
+    )
+    .describe(
+      "Array of files that need to be created, updated, or deleted based on the user's request",
+    ),
+
+  referencedFiles: z
+    .array(
+      z.object({
+        path: z
+          .string()
+          .describe(
+            "File path that is only provided for reference. Cannot be modified.",
+          ),
+      }),
+    )
+    .describe(
+      "Array of read-only files that the second LLM can reference when generating updates. Can be empty if no reference is needed.",
+    ),
+});
+
+export const websiteUpdateSchema = z.object({
+  code: z
+    .array(
+      z.object({
+        action: z
+          .literal(["update", "create", "delete"])
+          .describe("Action: create, update, or delete"),
+        path: z.string().describe("File path"),
+        updatedContent: z
+          .string()
+          .describe(
+            "The final runnable code of the file, wrapped in <coderocketFile>...</coderocketFile> tags",
+          ),
+      }),
+    )
+    .describe(
+      "An array containing multiple files on which actions need to be performed",
+    ),
+});

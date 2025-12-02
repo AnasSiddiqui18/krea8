@@ -3,9 +3,16 @@ import {
   createFolderTree,
   getAvailablePort,
   getFile,
+  getProjectStructure,
   updateFile,
+  updateOrCreateFiles,
 } from "@/helpers/helpers";
 import { Sandbox } from "@/docker/sandbox";
+import { streamObject } from "ai";
+import { model } from "@/lib/ai/google";
+import { updateWebsitePrompt } from "@/lib/prompt";
+import { mockFiles, NextTemplate } from "data";
+import { websiteUpdateSchema } from "@/lib/schema/schema";
 
 export const sandboxRouter = new Hono();
 
@@ -149,10 +156,10 @@ sandboxRouter.get("/file/:sbxId", async (c) => {
   }
 });
 
+// updating manually
+
 sandboxRouter.patch("/file/:sbxId", async (c) => {
   try {
-    console.log("patch runs");
-
     const { sbxId } = c.req.param();
     const { filePath } = c.req.query();
     const { content } = await c.req.json();

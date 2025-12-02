@@ -1,5 +1,7 @@
 import crypto from "crypto";
 import { docker } from "./docker";
+import { createFolderTree } from "@/helpers/helpers";
+import { mockFiles } from "data";
 
 export class Sandbox {
   docker: typeof docker;
@@ -42,7 +44,9 @@ export class Sandbox {
 
       await this.docker.pull(imageName, (err: any, stream: any) => {
         if (err) {
-          console.log("failed to pull image::", err);
+          const error = err.message ?? err;
+
+          console.log("failed to pull image::", error);
         }
 
         this.docker.modem.followProgress(stream, async () => {

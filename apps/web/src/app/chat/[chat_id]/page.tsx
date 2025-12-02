@@ -13,13 +13,11 @@ import {
   convertFilesToTree,
   convertObjToArr,
   extractCodeContent,
+  isValidPath,
 } from "@/shared/shared";
 import { DefaultChatTransport } from "ai";
 import { useQuery } from "@tanstack/react-query";
 import { sandbox } from "@/queries/sandbox.queries";
-
-const isValidPath = (path: string | undefined) =>
-  path ? filesEx.some((p) => path.includes(p)) : false;
 
 export default function ChatPage({
   params,
@@ -35,6 +33,23 @@ export default function ChatPage({
   const { object, submit } = useObject({
     api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website`,
     schema: fragmentSchema,
+    // fetch: (async (input, init = {}) => {
+    //   console.log("fetch runs", input);
+
+    //   const mergedInit: RequestInit = {
+    //     ...init,
+    //     method: "PATCH",
+    //     headers: {
+    //       ...(init.headers instanceof Headers
+    //         ? Object.fromEntries((init.headers as Headers).entries())
+    //         : (init.headers as Record<string, string> | undefined)),
+    //       "Content-Type": "application/json",
+    //     },
+    //     credentials: init.credentials ?? "same-origin",
+    //   };
+
+    //   return fetch(input, mergedInit);
+    // }) as typeof fetch,
     onFinish: async (event) => {
       console.log("finish website creation");
 
@@ -145,7 +160,7 @@ export default function ChatPage({
         currentAction &&
         !processedPaths.current.has(currentPath)
       ) {
-        const content = `<lov-tool-use action='${currentFile?.action}' path='${currentFile?.file_path}'></lov-tool-use>`;
+        const content = `<lov-tool-use name=${currentFile.file_name} action='${currentFile.action}' path='${currentFile.file_path}'></lov-tool-use>`;
 
         processedPaths.current.set(currentPath, currentAction);
 

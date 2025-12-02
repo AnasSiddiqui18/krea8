@@ -51,3 +51,23 @@ export const fragmentSchema = z.object({
   - "The Blog Platform has been generated to help you publish and organize content. The preview environment is in progress and will start automatically once ready."
 `),
 });
+
+export const websiteUpdateSchema = z.object({
+  code: z
+    .array(
+      z.object({
+        action: z
+          .literal(["update", "create", "delete"])
+          .describe("Action: create, update, or delete"),
+        path: z.string().describe("File path"),
+        updatedContent: z
+          .string()
+          .describe(
+            "The final runnable code of the file, wrapped in <coderocketFile>...</coderocketFile> tags",
+          ),
+      }),
+    )
+    .describe(
+      "An array containing multiple files on which actions need to be performed",
+    ),
+});

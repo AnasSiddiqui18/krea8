@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { getPort } from "get-port-please";
+import { mockFiles } from "data";
 
 const getFoldersPath = (filePath: string) => {
   const segments = filePath.split("/").filter(Boolean);
@@ -90,4 +91,59 @@ export async function updateFile(
   } catch (error) {
     return { success: false, message: "failed to update" };
   }
+}
+
+export function convertFiles(structure: Record<string, any[]>) {
+  const object: Record<string, any[]> = {};
+
+  Object.entries(structure).forEach(([fieldName, arr]) => {
+    const updatedArr = arr.map((file) => ({
+      ...file,
+      content: mockFiles[file.path],
+    }));
+
+    object[fieldName] = updatedArr;
+  });
+
+  return object;
+}
+
+export async function updateOrCreateFiles(
+  updatedFiles: { action: string; path: string; updatedContent: string }[],
+  sbxId: string,
+) {
+  try {
+    const rootPath = getSbxRoot(sbxId);
+
+    updatedFiles.forEach((file) => {
+      console.log(file.action, file.path);
+      const regex = /<coderocketFile[^>]*>([\s\S]*?)<\/coderocketFile>/;
+      const match = file.updatedContent.match(regex);
+      fs.writeFileSync(`${path.join(rootPath, file.path)}`, match?.[1]!);
+    });
+  } catch (error) {
+    console.log("update or create failed");
+  }
+}
+
+export function getProjectStructure(sbxId: string) {
+  const object: Record<string, string> = {};
+
+  const rootPath = getSbxRoot(sbxId);
+  const fullPath = path.join(rootPath, "src");
+  const rootFolder = fs.readdirSync(fullPath);
+
+  rootFolder.forEach((dir) => {
+    const dirPath = path.join(fullPath, dir);
+    const files = fs.readdirSync(dirPath);
+    files.forEach((file) => {
+      const filePath = path.join(dirPath, file);
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      object[path.join("src", dir, file)] = fileContent;
+    });
+  });
+
+  // fs.writeFileSync("data.json", JSON.stringify(object, null, 2));
+
+  return object;
 }

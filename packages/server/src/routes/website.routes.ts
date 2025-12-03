@@ -86,8 +86,6 @@ websiteRouter.patch("/update-website/:sbxId", async (c) => {
     const { sbxId } = c.req.param();
     const { prompt } = await c.req.json();
 
-    console.log("update prompt", prompt);
-
     const projectFiles = getProjectStructure(sbxId);
 
     const stream = streamObject({

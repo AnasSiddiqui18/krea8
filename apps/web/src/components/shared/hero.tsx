@@ -13,7 +13,7 @@ import {
 } from "@repo/ui/components/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { initialPromptSchema } from "@/schema/schema";
+import { promptSchema } from "@/schema/schema";
 import z from "zod";
 import { globalStore } from "@/store/global.store";
 import { redirect } from "next/navigation";
@@ -53,15 +53,13 @@ function MainPromptArea() {
   }, []);
 
   const form = useForm({
-    resolver: zodResolver(initialPromptSchema),
-    defaultValues: {
-      initial_prompt: "",
-    },
+    resolver: zodResolver(promptSchema),
+    defaultValues: { prompt: "" },
   });
 
-  function onSubmit(value: z.infer<typeof initialPromptSchema>) {
-    const { initial_prompt } = value;
-    globalStore.initial_prompt = initial_prompt;
+  function onSubmit(value: z.infer<typeof promptSchema>) {
+    const { prompt } = value;
+    globalStore.initial_prompt = prompt;
     redirect("/chat/1234");
   }
 
@@ -73,7 +71,7 @@ function MainPromptArea() {
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <FormField
-            name="initial_prompt"
+            name="prompt"
             control={form.control}
             render={({ field }) => {
               return (

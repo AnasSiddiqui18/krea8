@@ -21,14 +21,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
-import { websiteUpdateSchema } from "@/schema/schema";
+import { promptSchema, websiteUpdateSchema } from "@/schema/schema";
 import { isValidPath } from "@/shared/shared";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
-
-const updateWebsiteSchema = z.object({
-  prompt: z.string(),
-});
 
 export function ChatInterface() {
   const messages = useChatMessages();
@@ -99,15 +95,11 @@ export function ChatInterface() {
   }, [messages]);
 
   const form = useForm({
-    resolver: zodResolver(updateWebsiteSchema),
-    defaultValues: {
-      prompt: "",
-    },
+    resolver: zodResolver(promptSchema),
+    defaultValues: { prompt: "" },
   });
 
-  async function handleWebsiteUpdate(
-    input: z.infer<typeof updateWebsiteSchema>,
-  ) {
+  async function handleWebsiteUpdate(input: z.infer<typeof promptSchema>) {
     try {
       const response = submit({ prompt: input.prompt });
     } catch (error) {

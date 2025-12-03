@@ -1,23 +1,45 @@
 import { axios } from "@/lib/axios";
+import { sendError, sendSuccess } from "@/lib/response";
+import {
+  getFilesFromSandboxSchema,
+  getSandboxCreationStatusSchema,
+  sandboxCreateSchema,
+  updateFileInSandboxSchema,
+} from "@/schema/schema";
+import z from "zod";
 
 export const sandbox = {
   create: async (updatedObj: Record<string, string>) => {
     try {
       const file = await axios.post(`/sandbox/create`, { files: updatedObj });
-      return file.data;
+      const parsed = sandboxCreateSchema.safeParse(file.data);
+      if (!parsed.success) {
+        console.log(z.treeifyError(parsed.error));
+        return sendError("invalid data received from server");
+      }
+
+      if (!parsed.data.success) return sendError("Failed to create sandbox");
+      return sendSuccess(parsed.data);
     } catch (error) {
       console.log(`Failed to call /sandbox/create`, error);
-      return null;
+      return sendError("Failed to call /sandbox/create");
     }
   },
 
   getCreationStatus: async (sbxId: string) => {
     try {
       const status = await axios.get(`/sandbox/status/${sbxId}`);
-      return status.data;
+
+      const parsed = getSandboxCreationStatusSchema.safeParse(status.data);
+
+      if (!parsed.success) {
+        return sendError("Invalid response from /sandbox/status");
+      }
+
+      return sendSuccess(parsed.data);
     } catch (error) {
-      console.log(`Failed to call /sandbox/status`, error);
-      return null;
+      console.log(`Failed to call /sandbox/status/${sbxId}`, error);
+      return sendError("Failed to call /sandbox/status");
     }
   },
 
@@ -26,24 +48,41 @@ export const sandbox = {
       const file = await axios.get(
         `/sandbox/file/${sbxId}?filePath=${filePath}`,
       );
-      return file.data;
+
+      const parsed = getFilesFromSandboxSchema.safeParse(file.data);
+
+      if (!parsed.success)
+        return (
+          console.log(z.treeifyError(parsed.error)),
+          sendError("Invalid response from /sandbox/file")
+        );
+
+      if (!parsed.data.success) return sendError("Failed to get file");
+
+      return sendSuccess(parsed.data);
     } catch (error) {
       console.log(`Failed to call /sandbox/file/${sbxId}`, error);
-      return null;
+      return sendError("Failed to call /sandbox/file");
     }
   },
 
   updateFile: async (filePath: string, sbxId: string, content: string) => {
     try {
-      const file = await axios.patch(
+      const response = await axios.patch(
         `/sandbox/file/${sbxId}?filePath=${filePath}`,
         { content },
       );
 
-      console.log("patch response", file.data);
+      const parsed = updateFileInSandboxSchema.safeParse(response.data);
+
+      if (!parsed.success) {
+        return sendError("Invalid response from update file");
+      }
+
+      return sendSuccess(parsed.data);
     } catch (error) {
-      console.log(`Failed to call /sandbox/file/${sbxId}`, error);
-      return null;
+      console.log(`Failed to update file /sandbox/file/${sbxId}`, error);
+      return sendError("Failed to call /sandbox/file");
     }
   },
 };

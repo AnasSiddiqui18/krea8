@@ -7,24 +7,19 @@ import {
   getParentFolderIds,
   trimPath,
 } from "@/shared/shared";
-import { WebContainerClass } from "@/webcontainer/webcontainer";
 import type { fileTreeStructure } from "@/shared/shared";
 import { cn } from "@repo/ui/lib/utils";
 import { FilePathSelector } from "./file-path-selector";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Breadcrumb, BreadcrumbList } from "@repo/ui/components/breadcrumb";
-import { TriangleAlert } from "lucide-react";
-import { Button } from "@repo/ui/components/button";
-import { SaveAlert } from "./save-alert";
+
 import { sandbox } from "@/queries/sandbox.queries";
 
 type IDEProps = React.ComponentProps<"div">;
 
 export function IDE({ className, ...props }: IDEProps) {
-  const [selectedFileId, setSelectedFileId] = useState("");
   const { fileTree, selectedFile, isPreviewLoading, sbxId } =
     useSnapshot(globalStore);
-  // const [folderIds, setFolderIds] = useState<string[] | null>(null);
 
   async function handleSelectFile(file: fileTreeStructure) {
     if (!sbxId) {
@@ -41,7 +36,6 @@ export function IDE({ className, ...props }: IDEProps) {
       return;
     }
 
-    // setSelectedFileId(file.id);
     const obj = getParentFolderIds(file.path, fileTree);
 
     if (!obj) {
@@ -49,9 +43,8 @@ export function IDE({ className, ...props }: IDEProps) {
       return;
     }
 
-    // setFolderIds(parentIds);
     globalStore.selectedFile = {
-      code: code.file,
+      code: code.data.file,
       path: file.path,
       parentFolders: obj.parentFolderIds as string[],
       id: file.id,

@@ -1,19 +1,10 @@
 import z from "zod";
 
-export const initialPromptSchema = z.object({
-  initial_prompt: z
-    .string()
-    .min(5, { message: "Prompt must be of 5 chars max" }),
-  // .max(150, { message: "Prompt should be max of 150 chars" }),
+export const promptSchema = z.object({
+  prompt: z.string().min(5, { message: "Prompt must be of 5 chars max" }),
 });
 
 export const fragmentSchema = z.object({
-  // commentary: z
-  //   .string()
-  //   .describe(
-  //     `Describe what you're about to do and the steps you want to take for generating the fragment in great detail.`,
-  //   ),
-
   code: z.array(
     z.object({
       action: z.enum(["creating", "updating"]).describe(`
@@ -70,4 +61,31 @@ export const websiteUpdateSchema = z.object({
     .describe(
       "An array containing multiple files on which actions need to be performed",
     ),
+});
+
+// sandbox schemas
+
+export const sandboxCreateSchema = z.union([
+  z.object({ success: z.literal(false), message: z.string(), sbxId: z.null() }),
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+    sbxId: z.string(),
+  }),
+]);
+
+export const getSandboxCreationStatusSchema = z.object({
+  status: z.enum(["completed", "failed", "progress"]),
+  server_url: z.union([z.string(), z.null()]),
+  message: z.string(),
+});
+
+export const getFilesFromSandboxSchema = z.union([
+  z.object({ message: z.string(), file: z.null(), success: z.literal(false) }),
+  z.object({ message: z.string(), file: z.string(), success: z.literal(true) }),
+]);
+
+export const updateFileInSandboxSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
 });

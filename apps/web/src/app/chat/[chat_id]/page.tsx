@@ -6,7 +6,6 @@ import { AppPreview } from "@/components/builder/app-preview";
 import { useSnapshot } from "@/hooks/use-snapshot";
 import { globalStore } from "@/store/global.store";
 import { useChat, useChatStore } from "@ai-sdk-tools/store";
-import { filesEx } from "@/data/data";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { fragmentSchema } from "@/schema/schema";
 import {
@@ -33,23 +32,6 @@ export default function ChatPage({
   const { object, submit } = useObject({
     api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website`,
     schema: fragmentSchema,
-    // fetch: (async (input, init = {}) => {
-    //   console.log("fetch runs", input);
-
-    //   const mergedInit: RequestInit = {
-    //     ...init,
-    //     method: "PATCH",
-    //     headers: {
-    //       ...(init.headers instanceof Headers
-    //         ? Object.fromEntries((init.headers as Headers).entries())
-    //         : (init.headers as Record<string, string> | undefined)),
-    //       "Content-Type": "application/json",
-    //     },
-    //     credentials: init.credentials ?? "same-origin",
-    //   };
-
-    //   return fetch(input, mergedInit);
-    // }) as typeof fetch,
     onFinish: async (event) => {
       console.log("finish website creation");
 
@@ -80,9 +62,8 @@ export default function ChatPage({
 
         try {
           const response = await sandbox.create(updatedObj);
-
-          if (response.success && response.sbxId) {
-            const sandboxId = response.sbxId;
+          if (response.success && response.data) {
+            const sandboxId = response.data.sbxId;
             setSbxId(sandboxId);
             globalStore.sbxId = sandboxId;
           }
@@ -101,7 +82,8 @@ export default function ChatPage({
     staleTime: Infinity,
     refetchInterval: ({ state }) => {
       const data = state.data;
-      if (data && data.status === "progress") return 5000;
+      if (!data) return false;
+      if (data.status && data.status === "progress") return 5000;
       return false;
     },
     queryFn: async () => {
@@ -112,7 +94,12 @@ export default function ChatPage({
 
       const data = await sandbox.getCreationStatus(sbxId);
 
-      return data;
+      if (!data.success) {
+        console.error("Failed to get status");
+        return;
+      }
+
+      return data.data;
     },
   });
 
@@ -140,9 +127,11 @@ export default function ChatPage({
       // TODO remove this timeout and get the server url when the server is fully loaded
 
       setTimeout(() => {
-        globalStore.isPreviewLoading = false;
-        console.log("setting server url", data.server_url);
-        iframeEl.src = data.server_url;
+        if (data.server_url) {
+          globalStore.isPreviewLoading = false;
+          console.log("setting server url", data.server_url);
+          iframeEl.src = data.server_url;
+        }
       }, 10000);
     }
   }, [data]);

@@ -75,7 +75,7 @@ export function MessageBox({ content, role }: any) {
                 }
 
                 globalStore.selectedFile = {
-                  code: code.file,
+                  code: code.data.file,
                   path: path,
                   parentFolders: obj.parentFolderIds as string[],
                   id: obj.fileId as string,

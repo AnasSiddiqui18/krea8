@@ -3,16 +3,9 @@ import {
   createFolderTree,
   getAvailablePort,
   getFile,
-  getProjectStructure,
   updateFile,
-  updateOrCreateFiles,
 } from "@/helpers/helpers";
 import { Sandbox } from "@/docker/sandbox";
-import { streamObject } from "ai";
-import { model } from "@/lib/ai/google";
-import { updateWebsitePrompt } from "@/lib/prompt";
-import { mockFiles, NextTemplate } from "data";
-import { websiteUpdateSchema } from "@/lib/schema/schema";
 
 export const sandboxRouter = new Hono();
 
@@ -77,7 +70,11 @@ sandboxRouter.post("/create", async (c) => {
       sbxId,
     });
   } catch (error) {
-    return c.json({ success: false, message: "Failed to create sandbox" });
+    return c.json({
+      success: false,
+      message: "Failed to create sandbox",
+      sbxId: null,
+    });
   }
 });
 
@@ -106,6 +103,7 @@ sandboxRouter.get("/status/:sbxId", async (c) => {
 
     if (!isServerReady) {
       return c.json({
+        message: "Server not ready",
         status: "progress",
         server_url: null,
       });
@@ -116,6 +114,7 @@ sandboxRouter.get("/status/:sbxId", async (c) => {
     return c.json({
       status: "completed",
       server_url: `http://localhost:${containerInfo.port}`,
+      message: "server started successfully",
     });
   } catch (error) {
     console.error("Failed to spin sandbox");
@@ -143,14 +142,19 @@ sandboxRouter.get("/file/:sbxId", async (c) => {
     if (!response.success) {
       return c.json({
         message: "failed to get file",
+        file: null,
         success: false,
       });
     }
 
-    return c.json(response);
+    return c.json({
+      ...response,
+      message: "File get successfully",
+    });
   } catch (error) {
     return c.json({
       message: "failed to get file",
+      file: null,
       success: false,
     });
   }

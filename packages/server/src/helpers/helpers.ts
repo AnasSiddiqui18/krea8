@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { getPort } from "get-port-please";
-import { mockFiles } from "data";
 
 const getFoldersPath = (filePath: string) => {
   const segments = filePath.split("/").filter(Boolean);
@@ -91,21 +90,6 @@ export async function updateFile(
   } catch (error) {
     return { success: false, message: "failed to update" };
   }
-}
-
-export function convertFiles(structure: Record<string, any[]>) {
-  const object: Record<string, any[]> = {};
-
-  Object.entries(structure).forEach(([fieldName, arr]) => {
-    const updatedArr = arr.map((file) => ({
-      ...file,
-      content: mockFiles[file.path],
-    }));
-
-    object[fieldName] = updatedArr;
-  });
-
-  return object;
 }
 
 export async function updateOrCreateFiles(

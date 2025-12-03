@@ -43,7 +43,16 @@ export function SaveAlert({
 
       globalStore.selectedFile.code = updatedCode;
 
-      await sandbox.updateFile(filePath, sbxId, updatedCode);
+      const updateResponse = await sandbox.updateFile(
+        filePath,
+        sbxId,
+        updatedCode,
+      );
+
+      if (!updateResponse.success) {
+        console.log("Failed to update file");
+        return;
+      }
 
       toggleSaveAlert();
     } catch (error) {

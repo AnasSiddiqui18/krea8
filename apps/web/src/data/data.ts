@@ -1,90 +1,89 @@
-import type { TreeNode } from "@/components/builder/tree-view-component";
+import type { TreeNode } from "@/components/builder/tree-view-component"
 
 export const sampleConversation = [
-  {
-    role: "user",
-    content: "Hey, can you help me create a landing page for my startup?",
-  },
-  { role: "assistant", content: "Absolutely! What’s your startup about?" },
-  {
-    role: "user",
-    content: "It’s called “NovaSync” — a team productivity platform.",
-  },
-  {
-    role: "assistant",
-    content: "Nice! Would you like a modern or minimal design?",
-  },
-  {
-    role: "user",
-    content: "Let’s go with modern — clean but with some color.",
-  },
-  {
-    role: "assistant",
-    content: "Got it. Do you want a hero section with a headline and CTA?",
-  },
-  {
-    role: "user",
-    content: "Yes, something like 'Boost Your Team’s Productivity with AI'.",
-  },
-  {
-    role: "assistant",
-    content: "Perfect. Should I include an illustration or product image?",
-  },
-  { role: "user", content: "An illustration would be better." },
-  {
-    role: "assistant",
-    content: "Great. How about sections — features, testimonials, pricing?",
-  },
-  { role: "user", content: "Add features and testimonials for now." },
-  {
-    role: "assistant",
-    content:
-      "Done. What color palette do you prefer — blue, purple, or custom?",
-  },
-  { role: "user", content: "Go with a soft blue and white combination." },
-  {
-    role: "assistant",
-    content: "Setting that up. Any specific font style you like?",
-  },
-  {
-    role: "user",
-    content: "Maybe something geometric and professional, like Inter.",
-  },
-  {
-    role: "assistant",
-    content: "Excellent choice. Want the navigation bar to be sticky?",
-  },
-  { role: "user", content: "Yes, and include a 'Get Started' button on it." },
-  { role: "assistant", content: "Got it. Should the page support dark mode?" },
-  { role: "user", content: "Yes, please." },
-  {
-    role: "assistant",
-    content: "Adding that now. Do you need a footer section?",
-  },
-  { role: "user", content: "Just a simple one with social links." },
-  {
-    role: "assistant",
-    content: "Done. Would you like me to deploy it to preview?",
-  },
-  { role: "user", content: "Sure, let’s see how it looks." },
-  {
-    role: "assistant",
-    content: "Your preview is ready — here’s the live URL.",
-  },
-  {
-    role: "user",
-    content: "Wow, this looks amazing. Thanks for the quick work!",
-  },
-];
+    {
+        role: "user",
+        content: "Hey, can you help me create a landing page for my startup?",
+    },
+    { role: "assistant", content: "Absolutely! What’s your startup about?" },
+    {
+        role: "user",
+        content: "It’s called “NovaSync” — a team productivity platform.",
+    },
+    {
+        role: "assistant",
+        content: "Nice! Would you like a modern or minimal design?",
+    },
+    {
+        role: "user",
+        content: "Let’s go with modern — clean but with some color.",
+    },
+    {
+        role: "assistant",
+        content: "Got it. Do you want a hero section with a headline and CTA?",
+    },
+    {
+        role: "user",
+        content: "Yes, something like 'Boost Your Team’s Productivity with AI'.",
+    },
+    {
+        role: "assistant",
+        content: "Perfect. Should I include an illustration or product image?",
+    },
+    { role: "user", content: "An illustration would be better." },
+    {
+        role: "assistant",
+        content: "Great. How about sections — features, testimonials, pricing?",
+    },
+    { role: "user", content: "Add features and testimonials for now." },
+    {
+        role: "assistant",
+        content: "Done. What color palette do you prefer — blue, purple, or custom?",
+    },
+    { role: "user", content: "Go with a soft blue and white combination." },
+    {
+        role: "assistant",
+        content: "Setting that up. Any specific font style you like?",
+    },
+    {
+        role: "user",
+        content: "Maybe something geometric and professional, like Inter.",
+    },
+    {
+        role: "assistant",
+        content: "Excellent choice. Want the navigation bar to be sticky?",
+    },
+    { role: "user", content: "Yes, and include a 'Get Started' button on it." },
+    { role: "assistant", content: "Got it. Should the page support dark mode?" },
+    { role: "user", content: "Yes, please." },
+    {
+        role: "assistant",
+        content: "Adding that now. Do you need a footer section?",
+    },
+    { role: "user", content: "Just a simple one with social links." },
+    {
+        role: "assistant",
+        content: "Done. Would you like me to deploy it to preview?",
+    },
+    { role: "user", content: "Sure, let’s see how it looks." },
+    {
+        role: "assistant",
+        content: "Your preview is ready — here’s the live URL.",
+    },
+    {
+        role: "user",
+        content: "Wow, this looks amazing. Thanks for the quick work!",
+    },
+]
 
 const files = {
-  src: {
-    directory: {
-      app: {
+    src: {
         directory: {
-          "layout.tsx": {
-            file: {
-              contents: `import "./globals.css";
+            app: {
+                directory: {
+                    "layout.tsx": {
+                        file: {
+                            contents: `import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
@@ -107,12 +106,12 @@ export default function RootLayout({
   );
 }
 `,
-            },
-          },
+                        },
+                    },
 
-          "globals.css": {
-            file: {
-              contents: `@tailwind base;
+                    "globals.css": {
+                        file: {
+                            contents: `@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -122,24 +121,24 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 `,
-            },
-          },
+                        },
+                    },
 
-          "page.tsx": {
-            file: {
-              contents: `export default function Home() {
+                    "page.tsx": {
+                        file: {
+                            contents: `export default function Home() {
   return <div className="text-red-300">some text</div>;
 }`,
+                        },
+                    },
+                },
             },
-          },
         },
-      },
     },
-  },
 
-  "tailwind.config.ts": {
-    file: {
-      contents: `
+    "tailwind.config.ts": {
+        file: {
+            contents: `
         
 import type { Config } from "tailwindcss";
 const config: Config = {
@@ -154,12 +153,12 @@ export default config;
 
         
         `,
+        },
     },
-  },
 
-  "package.json": {
-    file: {
-      contents: `
+    "package.json": {
+        file: {
+            contents: `
         {
   "name": "test",
   "version": "0.1.0",
@@ -191,12 +190,12 @@ export default config;
 
         
         `,
+        },
     },
-  },
 
-  "tsconfig.json": {
-    file: {
-      contents: `
+    "tsconfig.json": {
+        file: {
+            contents: `
         
         
         {
@@ -228,12 +227,12 @@ export default config;
 }
 
         `,
+        },
     },
-  },
 
-  "postcss.config.mjs": {
-    file: {
-      contents: `/** @type {import('postcss-load-config').Config} **/
+    "postcss.config.mjs": {
+        file: {
+            contents: `/** @type {import('postcss-load-config').Config} **/
 
 const config = {
   plugins: { tailwindcss: {}, autoprefixer: {} },
@@ -241,153 +240,153 @@ const config = {
 
 export default config;
 `,
+        },
     },
-  },
-};
+}
 
 export const mockFileTree: TreeNode[] = [
-  {
-    id: "src",
-    label: "src",
-    type: "dir",
-    children: [
-      {
-        id: "app",
-        label: "app",
+    {
+        id: "src",
+        label: "src",
         type: "dir",
         children: [
-          {
-            id: "layout.tsx",
-            label: "layout.tsx",
-            type: "file",
-            children: [],
-          },
+            {
+                id: "app",
+                label: "app",
+                type: "dir",
+                children: [
+                    {
+                        id: "layout.tsx",
+                        label: "layout.tsx",
+                        type: "file",
+                        children: [],
+                    },
 
-          {
-            id: "page.tsx",
-            label: "page.tsx",
-            type: "file",
-            children: [],
-          },
-          {
-            id: "globals.css",
-            label: "globals.css",
-            type: "file",
-            children: [],
-          },
+                    {
+                        id: "page.tsx",
+                        label: "page.tsx",
+                        type: "file",
+                        children: [],
+                    },
+                    {
+                        id: "globals.css",
+                        label: "globals.css",
+                        type: "file",
+                        children: [],
+                    },
+                ],
+            },
         ],
-      },
-    ],
-  },
+    },
 
-  {
-    id: "packge.json",
-    label: "packge.json",
-    type: "file",
-    children: [],
-  },
+    {
+        id: "packge.json",
+        label: "packge.json",
+        type: "file",
+        children: [],
+    },
 
-  {
-    id: "tailwind.config.ts",
-    label: "tailwind.config.ts",
-    type: "file",
+    {
+        id: "tailwind.config.ts",
+        label: "tailwind.config.ts",
+        type: "file",
 
-    children: [],
-  },
-];
+        children: [],
+    },
+]
 
 export const filesEx = [
-  // Code files
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".rs",
-  ".py",
-  ".go",
-  ".java",
-  ".cpp",
-  ".c",
-  ".cs",
-  ".swift",
-  ".rb",
-  ".php",
+    // Code files
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".rs",
+    ".py",
+    ".go",
+    ".java",
+    ".cpp",
+    ".c",
+    ".cs",
+    ".swift",
+    ".rb",
+    ".php",
 
-  // Config files
-  ".config.ts",
-  ".config.js",
-  ".config.mjs",
-  ".config.cjs",
-  ".json",
-  ".yaml",
-  ".yml",
-  ".toml",
-  ".ini",
+    // Config files
+    ".config.ts",
+    ".config.js",
+    ".config.mjs",
+    ".config.cjs",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".ini",
 
-  // Markdown & docs
-  ".md",
-  ".MD",
-  ".mdx",
-  ".txt",
-  ".log",
-  ".csv",
+    // Markdown & docs
+    ".md",
+    ".MD",
+    ".mdx",
+    ".txt",
+    ".log",
+    ".csv",
 
-  // Style files
-  ".css",
-  ".scss",
-  ".sass",
-  ".less",
-  ".styl",
+    // Style files
+    ".css",
+    ".scss",
+    ".sass",
+    ".less",
+    ".styl",
 
-  // Environment & ignore files
-  ".env",
-  ".env.local",
-  ".env.development",
-  ".env.production",
-  ".gitignore",
-  ".gitattributes",
+    // Environment & ignore files
+    ".env",
+    ".env.local",
+    ".env.development",
+    ".env.production",
+    ".gitignore",
+    ".gitattributes",
 
-  // Build / meta files
-  ".lock",
-  ".lockb",
-  ".babelrc",
-  ".eslintrc",
-  ".prettierrc",
-  ".editorconfig",
+    // Build / meta files
+    ".lock",
+    ".lockb",
+    ".babelrc",
+    ".eslintrc",
+    ".prettierrc",
+    ".editorconfig",
 
-  // Binary / media files
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".svg",
-  ".ico",
-  ".webp",
-  ".avif",
-  ".mp3",
-  ".mp4",
-  ".mov",
-  ".wav",
-  ".webm",
-  ".pdf",
-  ".zip",
-  ".tar",
-  ".gz",
+    // Binary / media files
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".ico",
+    ".webp",
+    ".avif",
+    ".mp3",
+    ".mp4",
+    ".mov",
+    ".wav",
+    ".webm",
+    ".pdf",
+    ".zip",
+    ".tar",
+    ".gz",
 
-  // Misc
-  ".dockerfile",
-  ".dockerignore",
-  ".sh",
-  ".bat",
-  ".ps1",
-];
+    // Misc
+    ".dockerfile",
+    ".dockerignore",
+    ".sh",
+    ".bat",
+    ".ps1",
+]
 
 export const projectFiles = [
-  { file_path: "src/app/page.tsx" },
-  { file_path: "src/app/layout.tsx" },
-  { file_path: "src/app/globals.css" },
-  { file_path: "tailwind.config.mjs" },
-  { file_path: "tsconfig.json" },
-  { file_path: "package.json" },
-  { file_path: "postcss.config.mjs" },
-];
+    { file_path: "src/app/page.tsx" },
+    { file_path: "src/app/layout.tsx" },
+    { file_path: "src/app/globals.css" },
+    { file_path: "tailwind.config.mjs" },
+    { file_path: "tsconfig.json" },
+    { file_path: "package.json" },
+    { file_path: "postcss.config.mjs" },
+]

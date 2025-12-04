@@ -1,13 +1,13 @@
-import z from "zod";
+import z from "zod"
 
 export const promptSchema = z.object({
-  prompt: z.string().min(5, { message: "Prompt must be of 5 chars max" }),
-});
+    prompt: z.string().min(5, { message: "Prompt must be of 5 chars max" }),
+})
 
 export const fragmentSchema = z.object({
-  code: z.array(
-    z.object({
-      action: z.enum(["creating", "updating"]).describe(`
+    code: z.array(
+        z.object({
+            action: z.enum(["creating", "updating"]).describe(`
         Specifies the type of file operation being performed.
         
         - **"creating"** → A new file is being added to the project (e.g., \`src/components/Button.tsx\` if it didn't exist before).
@@ -15,18 +15,14 @@ export const fragmentSchema = z.object({
         
         This field helps distinguish between files that are newly generated and those that are modified as part of an update process.
           `),
-      file_name: z.string().describe("Name of the file."),
-      file_path: z
-        .string()
-        .describe("Relative path to the file, including the file name."),
-      file_content: z
-        .string()
-        .describe(
-          "actual code content of the corresponding file, wrapped in a coderocketFile tag",
-        ),
-    }),
-  ),
-  completion_message: z.string().describe(`
+            file_name: z.string().describe("Name of the file."),
+            file_path: z.string().describe("Relative path to the file, including the file name."),
+            file_content: z
+                .string()
+                .describe("actual code content of the corresponding file, wrapped in a coderocketFile tag"),
+        }),
+    ),
+    completion_message: z.string().describe(`
   A short, professional completion message (1–2 sentences) displayed to the user once the project generation process is finished.
 
   The message must:
@@ -41,51 +37,58 @@ export const fragmentSchema = z.object({
   - "Your Portfolio Website has been generated to showcase your work professionally. The WebContainer is currently setting up and will be accessible shortly."
   - "The Blog Platform has been generated to help you publish and organize content. The preview environment is in progress and will start automatically once ready."
 `),
-});
+})
 
 export const websiteUpdateSchema = z.object({
-  code: z
-    .array(
-      z.object({
-        action: z
-          .literal(["update", "create", "delete"])
-          .describe("Action: create, update, or delete"),
-        path: z.string().describe("File path"),
-        updatedContent: z
-          .string()
-          .describe(
-            "The final runnable code of the file, wrapped in <coderocketFile>...</coderocketFile> tags",
-          ),
-      }),
-    )
-    .describe(
-      "An array containing multiple files on which actions need to be performed",
-    ),
-});
+    initial_message: z
+        .string()
+        .describe(
+            "A short confirmation sentence BEFORE providing any code changes. This must clearly state that the LLM fully understands the user's request and is about to begin applying the requested feature or updates.",
+        ),
+    code: z
+        .array(
+            z.object({
+                action: z.literal(["update", "create", "delete"]).describe("Action: create, update, or delete"),
+                path: z.string().describe("File path"),
+                updatedContent: z
+                    .string()
+                    .describe(
+                        "The final runnable code of the file, wrapped in <coderocketFile>...</coderocketFile> tags",
+                    ),
+            }),
+        )
+        .describe("An array containing multiple files on which actions need to be performed"),
+
+    outro_message: z
+        .string()
+        .describe(
+            "A short closing sentence AFTER all code changes. This must clearly state that the requested modifications have been completed and delivered.",
+        ),
+})
 
 // sandbox schemas
 
 export const sandboxCreateSchema = z.union([
-  z.object({ success: z.literal(false), message: z.string(), sbxId: z.null() }),
-  z.object({
-    success: z.literal(true),
-    message: z.string(),
-    sbxId: z.string(),
-  }),
-]);
+    z.object({ success: z.literal(false), message: z.string(), sbxId: z.null() }),
+    z.object({
+        success: z.literal(true),
+        message: z.string(),
+        sbxId: z.string(),
+    }),
+])
 
 export const getSandboxCreationStatusSchema = z.object({
-  status: z.enum(["completed", "failed", "progress"]),
-  server_url: z.union([z.string(), z.null()]),
-  message: z.string(),
-});
+    status: z.enum(["completed", "failed", "progress"]),
+    server_url: z.union([z.string(), z.null()]),
+    message: z.string(),
+})
 
 export const getFilesFromSandboxSchema = z.union([
-  z.object({ message: z.string(), file: z.null(), success: z.literal(false) }),
-  z.object({ message: z.string(), file: z.string(), success: z.literal(true) }),
-]);
+    z.object({ message: z.string(), file: z.null(), success: z.literal(false) }),
+    z.object({ message: z.string(), file: z.string(), success: z.literal(true) }),
+])
 
 export const updateFileInSandboxSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
+    success: z.boolean(),
+    message: z.string(),
+})

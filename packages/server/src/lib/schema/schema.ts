@@ -1,9 +1,9 @@
-import z from "zod";
+import z from "zod"
 
 export const fragmentSchema = z.object({
-  code: z.array(
-    z.object({
-      action: z.enum(["creating", "updating"]).describe(`
+    code: z.array(
+        z.object({
+            action: z.enum(["creating", "updating"]).describe(`
         Specifies the type of file operation being performed.
         
         - **"creating"** → A new file is being added to the project (e.g., \`src/components/Button.tsx\` if it didn't exist before).
@@ -11,18 +11,14 @@ export const fragmentSchema = z.object({
         
         This field helps distinguish between files that are newly generated and those that are modified as part of an update process.
           `),
-      file_name: z.string().describe("Name of the file."),
-      file_path: z
-        .string()
-        .describe("Relative path to the file, including the file name."),
-      file_content: z
-        .string()
-        .describe(
-          "actual code content of the corresponding file, wrapped in a coderocketFile tag",
-        ),
-    }),
-  ),
-  completion_message: z.string().describe(`
+            file_name: z.string().describe("Name of the file."),
+            file_path: z.string().describe("Relative path to the file, including the file name."),
+            file_content: z
+                .string()
+                .describe("actual code content of the corresponding file, wrapped in a coderocketFile tag"),
+        }),
+    ),
+    completion_message: z.string().describe(`
   A short, professional completion message (1–2 sentences) displayed to the user once the project generation process is finished.
 
   The message must:
@@ -37,59 +33,60 @@ export const fragmentSchema = z.object({
   - "Your Portfolio Website has been generated to showcase your work professionally. The WebContainer is currently setting up and will be accessible shortly."
   - "The Blog Platform has been generated to help you publish and organize content. The preview environment is in progress and will start automatically once ready."
 `),
-});
+})
 
 export const websiteUpdatePlanSchema = z.object({
-  actionFiles: z
-    .array(
-      z.object({
-        action: z
-          .literal(["update", "create", "delete"])
-          .describe(
-            "Action to perform on the file. 'update' = modify existing, 'create' = add new, 'delete' = remove",
-          ),
-        path: z
-          .string()
-          .describe(
-            "Exact file path inside the project. For 'update' or 'delete', path must exist. For 'create', path must be valid and new.",
-          ),
-      }),
-    )
-    .describe(
-      "Array of files that need to be created, updated, or deleted based on the user's request",
-    ),
+    actionFiles: z
+        .array(
+            z.object({
+                action: z
+                    .literal(["update", "create", "delete"])
+                    .describe(
+                        "Action to perform on the file. 'update' = modify existing, 'create' = add new, 'delete' = remove",
+                    ),
+                path: z
+                    .string()
+                    .describe(
+                        "Exact file path inside the project. For 'update' or 'delete', path must exist. For 'create', path must be valid and new.",
+                    ),
+            }),
+        )
+        .describe("Array of files that need to be created, updated, or deleted based on the user's request"),
 
-  referencedFiles: z
-    .array(
-      z.object({
-        path: z
-          .string()
-          .describe(
-            "File path that is only provided for reference. Cannot be modified.",
-          ),
-      }),
-    )
-    .describe(
-      "Array of read-only files that the second LLM can reference when generating updates. Can be empty if no reference is needed.",
-    ),
-});
+    referencedFiles: z
+        .array(
+            z.object({
+                path: z.string().describe("File path that is only provided for reference. Cannot be modified."),
+            }),
+        )
+        .describe(
+            "Array of read-only files that the second LLM can reference when generating updates. Can be empty if no reference is needed.",
+        ),
+})
 
 export const websiteUpdateSchema = z.object({
-  code: z
-    .array(
-      z.object({
-        action: z
-          .literal(["update", "create", "delete"])
-          .describe("Action: create, update, or delete"),
-        path: z.string().describe("File path"),
-        updatedContent: z
-          .string()
-          .describe(
-            "The final runnable code of the file, wrapped in <coderocketFile>...</coderocketFile> tags",
-          ),
-      }),
-    )
-    .describe(
-      "An array containing multiple files on which actions need to be performed",
-    ),
-});
+    initial_message: z
+        .string()
+        .describe(
+            "A short confirmation sentence BEFORE providing any code changes. This must clearly state that the LLM fully understands the user's request and is about to begin applying the requested feature or updates.",
+        ),
+    code: z
+        .array(
+            z.object({
+                action: z.literal(["update", "create", "delete"]).describe("Action: create, update, or delete"),
+                path: z.string().describe("File path"),
+                updatedContent: z
+                    .string()
+                    .describe(
+                        "The final runnable code of the file, wrapped in <coderocketFile>...</coderocketFile> tags",
+                    ),
+            }),
+        )
+        .describe("An array containing multiple files on which actions need to be performed"),
+
+    outro_message: z
+        .string()
+        .describe(
+            "A short closing sentence AFTER all code changes. This must clearly state that the requested modifications have been completed and delivered.",
+        ),
+})

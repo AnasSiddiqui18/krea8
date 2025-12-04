@@ -1,68 +1,4 @@
-import { NextTemplate } from "data";
-import z from "zod";
-
-export function toPrompt(initial_prompt: string) {
-  return `
-    You are an advanced AI software architect and senior full-stack developer.
-
-    Your task is to **analyze the following project description** and generate a refined, detailed, and unambiguous **JSON object** that follows the provided schema.
-
-    The goal is to produce structured data that can be passed to another LLM (the code generator) to build the project.
-
-    ---
-
-    ### SCHEMA (strictly follow this structure)
-    {
-      "prompt": string, // The final, enhanced prompt text — ready for the next LLM
-      "tech_stack": string, // The primary technology or framework
-      "framework_details": string[], // Additional frameworks, libraries, or UI kits
-      "project_type": string, // Type of application (dashboard, chat app, portfolio, etc.)
-      "project_description": string, // Short summary or purpose of the app
-      "key_features": string[], // Core functionalities or pages
-      "design_preferences": string[], // Any UI/UX or animation hints
-      "state_management": string, // State management strategy (Zustand, Redux, etc.)
-      "recommended_dependencies": string[], // Libraries or packages to consider
-      "reasoning": string // Short reasoning for chosen stack and assumptions
-    }
-
-    ---
-
-    ### RULES:
-
-    1. **Tech Stack Detection**
-       - Identify technologies explicitly mentioned in the input.
-       - If none are found, default to:
-         - "Next.js 15.1.3 (App Router)"
-         - "TypeScript"
-         - "TailwindCSS"
-         - "ShadCN/UI"
-         - "Zustand" for state management.
-       - Mention these defaults clearly in both \`tech_stack\` and \`framework_details\`.
-
-    2. **Project Understanding**
-       - Expand the input logically to include:
-         - The app’s **purpose or goal**
-         - The **type of project**
-         - **Key features or pages**
-         - **Design or animation hints**
-         - Any **API, database, or integration** if implied.
-
-    3. **No Folder Structure**
-       - Do not include or suggest any folder structure.
-       - The code generator LLM will handle this.
-
-    4. **Output Format**
-       - Output **valid JSON only** (no markdown, no explanations).
-       - Each key must exist (use empty strings or arrays if not applicable).
-
-    ---
-
-    ### INPUT PROJECT DESCRIPTION:
-    ${initial_prompt}
-
-    Now analyze the input carefully and return the final result strictly in **valid JSON** that matches the schema above.
-    `;
-}
+import z from "zod"
 
 export const initialPrompt = (prompt: string) => `
 You are an AI software engineer that carefully analyzes project ideas and creates clean, structured development plans.
@@ -74,6 +10,10 @@ When the user shares their project idea, respond with a brief warm acknowledgmen
 - Stream the project plan using minimal markdown
 - Keep headings small and content concise
 - Focus on essential elements only
+
+*Important*
+
+- Only use static tech stack such as Next.js (15.1.3), tailwindcss for styling
 
 **Markdown structure (use progressively):**
 
@@ -99,150 +39,28 @@ When the user shares their project idea, respond with a brief warm acknowledgmen
 
 user prompt
 
-${prompt}
-
-
-`;
+${prompt}`
 
 export const initialPromptSchema = z.object({
-  type: z.literal("status"),
-  stage: z.literal("initializing"),
-  message: z
-    .string()
-    .describe(
-      "A short, human-like confirmation message that setup has started.",
-    ),
-});
+    type: z.literal("status"),
+    stage: z.literal("initializing"),
+    message: z.string().describe("A short, human-like confirmation message that setup has started."),
+})
 
 export const projectTemplateSchema = z.object({
-  template: z.object({
-    id: z.string(),
-    files: z.object({}),
-  }),
-});
+    template: z.object({
+        id: z.string(),
+        files: z.object({}),
+    }),
+})
 
-// export const generateWebsitePrompt = (userPrompt: string, port: string) => `
-// You are a professional code generator AI. Your task is to generate or update files for a Next.js 15.1.3 project using the following starter template:
-
-// ### 📂 Template Reference (do not modify unless instructed)
-// my-next-app/
-// ├─ tsconfig.json
-// ├─ next.config.ts
-// ├─ package.json
-// ├─ tailwind.config.mjs
-// ├─ postcss.config.mjs
-// └─ src/
-//    └─ app/
-//       ├─ layout.tsx
-//       ├─ page.tsx
-//       └─ globals.css
-//    ├─ components/
-
-// **User requirements:**
-// "${userPrompt}"
-
-// --- IMPORTANT: Create separate, reusable components where applicable.
-
-// **Rules for generation:**
-
-// 1. **File Operations**
-//    - Only create new files if they do not exist. Use "action": "creating".
-//    - Update existing files only if necessary. Use "action": "updating".
-//    - Do not break any existing functionality or structure of the starter template.
-
-// 2. **File Structure**
-//    - Each file must be wrapped in a "<coderocketFile>" tag exactly as shown:
-//      <coderocketFile name="FILE_NAME">
-//      ACTUAL FILE CONTENT HERE
-//      </coderocketFile>
-//    - FILE_NAME must exactly match the file name.
-//    - The code inside the wrapper must be fully formatted, complete, and ready to execute.
-
-// 3. **Schema Compliance**
-//    - Output each file strictly as a JSON object with these fields only:
-//      {
-//        "action": "creating" | "updating",
-//        "file_name": "Name of the file",
-//        "file_path": "Relative path including the file name",
-//        "file_content": "<coderocketFile name=\\"FILE_NAME\\">...file content...</coderocketFile>"
-//      }
-//    - **Do not include any other text, messages, explanations, or comments in any field.**
-//    - Do not add placeholder text like "Here is the JSON requested" or any extra content.
-
-// 4. **Formatting & Restrictions**
-//    - Preserve indentation, formatting, and all existing imports.
-//    - Do not add SVGs, external assets, or inline comments for explanations.
-//    - Do not remove or rename existing files unless explicitly required.
-//    - Avoid breaking changes: all existing pages, layouts, and components must remain functional.
-
-// 5. **Positive Example**
-// {
-//   "action": "updating",
-//   "file_name": "page.tsx",
-//   "file_path": "src/app/page.tsx",
-//   "file_content": "<coderocketFile name=\\"page.tsx\\">
-// 'use client';
-
-// import React from 'react';
-
-// export default function Page() {
-//   return (
-//     <div>
-//       <h1>Todo App</h1>
-//     </div>
-//   );
-// }
-// </coderocketFile>"
-// }
-
-// 6. **Negative Examples (Avoid these at any cost)**
-// - Missing wrapper:
-//   "<div>Hello World</div>"
-// - Breaking template structure:
-//   "Deleted layout.tsx or removed imports from globals.css"
-// - Wrong file name in wrapper:
-//   "<coderocketFile name='app.js'>console.log('Hello');</coderocketFile>"
-// - Any extra messages, comments, or text in JSON fields:
-//   "Here is the JSON requested"
-// - Adding external SVGs:
-//   "<img src='icon.svg' />"
-
-// 7. **Multiple Files**
-//    - If multiple files need updates, produce an **array of JSON objects**, each strictly following the schema and rules above.
-
-// *IMAGE USAGE*
-
-// Whenever using images must use html img tag to use images, when generating any image URL for products, cards, or UI elements, do NOT use real or external image sources. Always use placeholder images from https://placehold.co.
-// Format every image as:
-
-// https://placehold.co/{WIDTH}x{HEIGHT}/{BACKGROUND_HEX}/{TEXT_HEX}/png?text={TITLE_TEXT}
-
-// Rules:
-// - WIDTHxHEIGHT should match the component's expected dimensions (default: 1920x1080 if unspecified).
-// - BACKGROUND_HEX should be a color that matches the theme of the product (e.g., candy = f8e9a1, strawberry = ff6384, grape = 7d3cff).
-// - TEXT_HEX should always be high-contrast to the background (usually "ffffff").
-// - TITLE_TEXT should use "+" instead of spaces and reflect the product name (e.g., "Jelly+Beans+Mix").
-
-// If no product name is available, use a generic descriptive text like "Placeholder+Image".
-
-// *PORT USAGE*
-
-// Update the dev script inside package.json file of the Next.js from the provided Nextjs template reference to use the provided port number for the development server. Locate the 'dev' script inside the 'scripts' section of package.json and replace the existing port configuration (if any) with the provided port. Use the format: 'next dev --port ${port}'. Only modify the 'dev' script; all other scripts and fields should remain unchanged. Make sure the output is valid JSON. Example: if port = 4000, the 'dev' script value should be 'next dev --port 4000'. Do not modify any other script, dependecies versions etc
-
-// **IMPORTANT:** Ensure the generated code is fully functional, runnable as-is, and that no extra text exists anywhere in the output outside the JSON objects.
-// `;
-
-export const generateWebsitePrompt = (
-  userPrompt: string,
-  port: string,
-  initialTemplate: Record<string, string>,
-) => `
+export const generateWebsitePrompt = (userPrompt: string, port: string, initialTemplate: Record<string, string>) => `
 You are a professional code generator AI. Your task is to generate or update files for a Next.js 15.1.3 project using the following starter template:
 
 
 Template
 
-$${initialTemplate}
+${initialTemplate}
 
 ### 📂 Template Reference (do not modify unless instructed)
 my-next-app/
@@ -300,6 +118,7 @@ my-next-app/
   "file_name": "page.tsx",
   "file_path": "src/app/page.tsx",
   "file_content": "<coderocketFile name=\\"page.tsx\\">
+
 'use client';
 
 import React from 'react';
@@ -329,7 +148,8 @@ export default function Page() {
 7. **Multiple Files**
    - If multiple files need updates, produce an **array of JSON objects**, each strictly following the schema and rules above.
 
-*IMAGE USAGE (STRICT)*
+8. *Tailwind / Autoprefixer rule*
+  The dependency "autoprefixer" must exist under the "dependencies" key in package.json exactly as in the template. Do NOT move it to devDependencies or edit its version. Treat this as part of package.json immutability.
 
 ────────────────────────────────────────
 IMAGE SELECTION RULES (VERY STRICT)
@@ -473,6 +293,7 @@ You are ABSOLUTELY FORBIDDEN from doing ANY of the following:
 ❌ Do NOT regenerate a fresh package.json  
 ❌ Do NOT “fix” or “clean up” anything  
 ❌ Do NOT touch any script except the "dev" script
+❌ Do NOT move, modify, add, or remove any packages in 'dependencies' or 'devDependencies' — do not transfer packages between them under any circumstance.
 
 ---
 
@@ -525,7 +346,7 @@ You are ABSOLUTELY FORBIDDEN from doing ANY of the following:
   },
   "dependencies": {
     "lucide-react": "^0.548.0",
-    "autoprefixer": "^10.4.21",
+    "autoprefixer": "^10.4.21", 
     "next": "15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -548,255 +369,101 @@ Return the package.json EXACTLY as provided — same bytes, spacing, formatting,
 EXCEPT for replacing ONLY the “dev” script with the updated port. No other changes are allowed under any circumstances.
 
 **IMPORTANT:** Ensure the generated code is fully functional, runnable as-is, and that no extra text exists anywhere in the output outside the JSON objects.
-`;
+`
 
-export const generateWebsiteUpdatePlanPrompt = (
-  projectFiles: Record<string, string>,
-  userPrompt: string,
-) => `
-You are an expert codebase analysis system. You will receive:
+// export const updateWebsitePrompt = (structure: Record<string, string>, userPrompt: string) => `
+//   You are an expert Next.js AI developer. You will receive:
 
-1. The entire project file map (key = file path, value = file contents)
-2. A user request describing a change to the website
+//   1. A Next.js project structure as an object where keys are file paths and values are file contents:
+//   ${JSON.stringify(structure, null, 2)}
 
-Your task is to generate a **modification plan** describing exactly which files must be:
-- updated
-- created
-- deleted
+//   2. A user request describing modifications to the project:
+//   "${userPrompt}"
 
-Additionally, determine if any **existing files need to be referenced** (for context) by the second LLM, without modifying them.
+//   Your task:
 
----
+//   - Understand the user's request fully.
+//   - Decide which files need to be UPDATED or CREATED.
+//   - NEVER modify configuration files. These are STRICTLY READ-ONLY:
+//     - package.json
+//     - tsconfig.json
+//     - next.config.js / next.config.mjs
+//     - tailwind.config.js / tailwind.config.ts
+//     - postcss.config.js
+//     - eslint config files
+//   - Only update project source files or create new files if required by the user's request.
+//   - **Do not remove or overwrite existing code in any file unless explicitly instructed.**
+//   - If a new component is created or an existing component is updated, **update only the src/app/page.tsx file** to include it.
+//   - Do NOT modify layout.tsx or any other parent files; every new component must be added only to page.tsx.
+//   - Insert new components at the position requested by the user, or if unspecified, **append after the last existing JSX element in page.tsx**.
+//   - All updated or created files must be plug-and-play: imports, types, hooks, and functionality must work correctly.
 
-Your output MUST conform exactly to this structure:
+//   Response Format:
 
-{
-  "actionFiles": [
-    {
-      "name": string,       // Human-readable identifier, e.g., "Navbar", "Landing Page"
-      "action": "update" | "create" | "delete",
-      "path": string        // Exact project path for update/create/delete
-    }
-  ],
-  "referencedFiles": [
-    {
-      "path": string,       // File path for reference only
-    }
-  ]
-}
+//   - Return ONLY a JSON array.
+//   - Each item in the array must be an object where the key is the file path, and the value is the full updated or newly created file content.
+//   - Only return files that were modified or created.
 
----
+//   Examples:
 
-CRITICAL RULES:
+//   Example 1 – Creating a new Footer and updating page.tsx without removing existing content:
+//   User Request: "Add a footer component to the landing page."
 
-1. Only include files **directly needed** for the requested update in 'actionFiles'.
-2. Include only **necessary reference files** in 'referencedFiles'; these are **read-only**.
-3. For 'update' actions, the file **must exist** in the projectFiles. For 'create', it **must not exist yet**. For 'delete', only if explicitly requested.
-4. Do not include unrelated files (package.json, tsconfig.json, tailwind.config.ts, etc.).
-5. **Do not generate or change file contents** in this step — planning only.
-6. If no reference files are needed, 'referencedFiles' should be an empty array: [].
-7. Return **ONLY JSON**, no explanations, no extra text.
-
----
-
-EXAMPLES:
-
-**Example 1: Add a footer**
-
-User request: "Please create a footer component and place it at the last of the landing page structure, the footer will be fairly simple using the same logo as the Navbar."
-
-Output:
-{
-  "actionFiles": [
-    {
-      "name": "Footer",
-      "action": "create",
-      "path": "src/components/Footer.tsx" 
-    },
-    {
-      "name": "Landing Page",
-      "action": "update",
-      "path": "src/app/page.tsx"
-    }
-  ],
-  "referencedFiles": [
-    {
-      "path": "src/components/Navbar.tsx",
-    }
-  ]
-}
-
-**Example 2: Update navbar links**
-
-User request: "Add a new link 'Blog' to the Navbar component."
-
-Output:
-{
-  "actionFiles": [
-    {
-      "name": "Navbar",
-      "action": "update",
-      "path": "src/components/Navbar.tsx"
-    }
-  ],
-  "referencedFiles": []
-}
-
-**Example 3: Delete a component**
-
-User request: "Remove the old 'Testimonials' component from the page."
-
-Output:
-{
-  "actionFiles": [
-    {
-      "name": "Testimonials",
-      "action": "delete",
-      "path": "src/components/Testimonials.tsx"
-    },
-    {
-      "name": "Landing Page",
-      "action": "update",
-      "path": "src/app/page.tsx"
-    }
-  ],
-  "referencedFiles": []
-}
-
----
-
-PROJECT FILES:
-
-${JSON.stringify(projectFiles, null, 2)}
-
-USER REQUEST:
-
-"${userPrompt}"
-
----
-
-Return the JSON object with 'actionFiles' and 'referencedFiles'.
-`;
-
-// export const updateWebsitePrompt = (
-//   structure: Record<string, any[]>,
-//   userPrompt: string,
-// ) => `
-// You are an expert code generator with STRICT RULES.  Read this entire prompt before generating anything.
-
-// You will receive a single JSON object called **structure** plus a plain **user prompt** describing what the user wants changed. The **structure** object contains two arrays:
-
-// - 'actionFiles[]' — list of files the LLM MUST produce output for. Each object contains:
-//   - 'action': '"create" | "update" | "delete"'
-//   - 'path': exact path to operate on
-//   - optionally 'content': the current file content (only present for update actions or when included by the caller). **If provided, use this 'content' as the exact starting point for any "update".**
-
-// - 'referencedFiles[]' — authoritative, read-only files that are the ONLY sources of truth for visual structure, JSX patterns, classNames, brand elements, imports, and naming conventions. Each object contains:
-//   - 'path': path of the reference file
-//   - 'content': full file content — you MUST parse and reuse exact snippets from here when the user asks to reuse elements.
-
-// GOAL
-// Given:
-// - the 'userPrompt' (plain text) describing the requested change, and
-// - the 'structure' object with 'actionFiles and 'referencedFiles,
-
-// produce **only** a JSON array of file actions (one item per 'actionFiles' entry) describing the files after changes. Follow the ABSOLUTE RULES below.
-
-// 🔥 ABSOLUTE RULES (NO EXCEPTIONS)
-// 1. **ONLY output a JSON array.** Nothing else. No commentary, no extra fields, no code fences, no markdown. If the user supplied 'actionFiles' with N entries, you must return exactly N objects in the array — one per action file — in the same order.
-
-// 2. **Each array item must be exactly:**
-//    {
-//      "action": "create" | "update" | "delete",
-//      "path": "<exact path>",
-//      "updatedContent": "<coderocketFile>...file content here...</coderocketFile>"
-//    }
-//    - 'action' and 'path' must match the corresponding 'actionFiles' entry.
-//    - 'updatedContent' must be a string whose entire content is wrapped inside '<coderocketFile>...</coderocketFile>'.
-
-// 3. **For 'create' and 'update': 'updatedContent' must contain the full file content to be created/after update.** For 'delete': 'updatedContent' must be an empty '<coderocketFile></coderocketFile>'.
-
-// 4. **You MUST NOT invent or assume anything not present in the input.** That includes:
-//    - New images, icon files, logo files, CSS files, asset filenames, or new images/paths.
-//    - New imports unless they are absolutely required and you can reuse them from 'referencedFiles' (i.e., they already exist in references).
-//    - New top-level JSX patterns or brand names not present in referencedFiles.
-//    If the user requests something that would require an asset or element that does not exist in 'referencedFiles', prefer a textual/substituted implementation (for example reuse the same text logo JSX if there is no image logo) and **do not create imaginary assets**.
-
-// 5. **When the user asks to reuse elements from a referenced file (e.g., “same logo as Navbar”):**
-//    - Extract the **exact** JSX/text/className/import lines from the referenced file's 'content' and place them verbatim in the new/updated file.
-//    - Do not wrap, replace, or alter the extracted snippet (except to adjust variable names only when required and explicitly safe — prefer not to rename).
-//    - If an exact match does not exist, choose the closest exact match from 'referencedFiles'. Do not invent.
-
-// 6. **When updating a file:**
-//     - You MUST keep the entire original file structure EXACTLY as provided in actionFiles[].content.
-//     - You are never allowed to rewrite or replace unrelated sections of the file.
-//     - You may ONLY insert, remove, or modify the specific lines required by the userPrompt.
-//     - You MUST preserve all imports, JSX structure, components, layout, and styling that already exist.
-//     - If the user asks to "place something at the bottom", you must locate the correct insertion point in the existing JSX and insert it there without rewriting the rest.
-//     - ANY rewrite of the component structure beyond the requested change is strictly forbidden.
-
-// 7. **When creating a file:**
-//    - Use referencedFiles as the style guide: copy Tailwind class patterns, semantic HTML, JSX conventions, and naming.
-//    - If the user asks to “use the same logo as Navbar,” and the Navbar's code contains a text-based logo, reuse that exact block.
-//    - New code must be minimal: only add what the user explicitly requested and what is necessary to integrate with the updated files in 'actionFiles'.
-//    - Never create unknown assets; use text or existing referenced assets instead.
-
-// 8. **For any behavior that could hallucinate (uncertain names/paths/content): choose safe, deterministic behavior:**
-//    - If multiple referenced matches exist, choose the one that is the closest exact match.
-//    - If imports or symbols are ambiguous, prefer to reuse imports exactly as they are in referenced files.
-//    - If you cannot satisfy the user's request without inventing assets, do the closest valid alternative using only existing assets/referenced structures.
-
-// 9. **Output file content must be valid and consistent** with the project's conventions seen in 'referencedFiles' (e.g., Next.js 'Link' usage, Tailwind patterns, export default functions/components, etc.)
-
-// 10. **DO NOT add or remove items from 'actionFiles' — produce outputs only for the listed paths.** The caller will handle applying these results.
-
-// SPECIAL ANTI-HALLUCINATION RULES (examples)
-// - If 'Navbar.tsx' contains:
-//   <div className="text-2xl font-bold text-blue-600">
-//     <Link href="/">MyWebsite</Link>
-//   </div>
-//   and the user says “use the same logo as Navbar”, then **the new file must include this identical block** (character-for-character).
-
-// - If the user asks “place the footer at the last of the landing page structure,” and the 'actionFiles' contains an 'update' for 'src/app/page.tsx' with its current content, you must:
-//   - Use that provided 'content' as the base,
-//   - Import the created Footer (if 'Footer' is a 'create' action in the same 'actionFiles' array) using the exact path used in the 'create' action,
-//   - Insert '<Footer />' at the requested location (for example at the end of the main content before the closing tag), and
-//   - Return the full updated file content in 'updatedContent'.
-
-// IMPLEMENTATION DETAILS YOU MUST FOLLOW
-// - Treat 'referencedFiles[].content' as authoritative; parse it when extracting snippets.
-// - If 'actionFiles[].content' exists, it is the authoritative base for updates of that file.
-// - Add only the imports that are already present in 'referencedFiles' or that correspond to components you are creating in the same 'actionFiles' payload.
-// - Always wrap file contents inside '<coderocketFile>...</coderocketFile>' exactly (no extra whitespace outside tags). For deleted files return '<coderocketFile></coderocketFile>'.
-
-// REQUIRED OUTPUT FORMAT (again — exact)
-// Return a JSON array like:
-// [
-//   {
-//     "action": "update" | "create" | "delete",
-//     "path": "src/whatever/Here.tsx",
-//     "updatedContent": "<coderocketFile>...full file content here...</coderocketFile>"
+//   Current src/app/page.tsx file:
+//   \`\`\`tsx
+//   export default function Page() {
+//     return (
+//       <main>
+//         <h1>Welcome to our site</h1>
+//         <HeroSection />
+//       </main>
+//     );
 //   }
-// ]
+//   \`\`\`
 
-// NO explanations.
-// NO comments.
-// NO extra text.
+//   Response:
+//   {
+//     "code": [
+//       {
+//         "src/components/Footer.tsx": "import React from 'react';\\n\\nexport default function Footer() {\\n  return (<footer>\\n    <p>© 2025 Company Name</p>\\n    <a href='/about'>About</a>\\n    <a href='/contact'>Contact</a>\\n  </footer>);\\n}"
+//       },
+//       {
+//         "src/app/page.tsx": "import React from 'react';\\nimport HeroSection from '../components/HeroSection';\\nimport Footer from '../components/Footer';\\n\\nexport default function Page() {\\n  return (<main>\\n    <h1>Welcome to our site</h1>\\n    <HeroSection />\\n    <Footer />\\n  </main>);\\n}"
+//       }
+//     ]
+//   }
 
-// USER PROMPT:
-// "${userPrompt}"
+//   Example 2 – Updating Navbar:
+//   User Request: "Add a new navigation link 'Pricing' in the Navbar."
 
-// STRUCTURE (stringified JSON):
-// "${structure}"
+//   Response:
+//   {
+//     "code": [
+//         {
+//           "src/components/Navbar.tsx": "import React from 'react';\\n\\nexport default function Navbar() {\\n  return (<nav>\\n    <a href='/home'>Home</a>\\n    <a href='/about'>About</a>\\n    <a href='/pricing'>Pricing</a>\\n  </nav>);\\n}"
+//         },
+//         {
+//           "src/app/page.tsx": "import React from 'react';\\nimport Navbar from '../components/Navbar';\\n\\nexport default function Page() {\\n  return (<main>\\n    <Navbar />\\n  </main>);\\n}"
+//         }
+//     ]
+//   }
 
-// Now generate the array of file objects following all rules above.
+//   Rules:
 
-// `;
+//   1. Do not include explanations or Markdown in the response.
+//   2. Do not modify config files or unrelated files.
+//   3. Preserve all existing code unless explicitly instructed to remove it.
+//   4. Always ensure code is valid, functional, and plug-and-play.
+//   5. Always include required imports, hooks, and types.
+//   6. Automatically update src/app/page.tsx whenever a new component is created or an existing component is updated. **Never update layout.tsx or other files.**
+//   7. Insert new components at the position requested by the user, or append if unspecified.
+//   8. The response must be directly parseable with JSON.parse.
+//   9. Only return files that were modified or created.
 
-export const updateWebsitePrompt = (
-  structure: Record<string, string>,
-  userPrompt: string,
-) => `
+//   Now, consider the project structure and the user's request, and output the updated or newly created files exactly as they should exist in the project, updating only page.tsx for parent integration.
+// `
+
+export const updateWebsitePrompt = (structure: Record<string, string>, userPrompt: string) => `
   You are an expert Next.js AI developer. You will receive:
 
   1. A Next.js project structure as an object where keys are file paths and values are file contents:
@@ -809,25 +476,35 @@ export const updateWebsitePrompt = (
 
   - Understand the user's request fully.
   - Decide which files need to be UPDATED or CREATED.
-  - NEVER modify configuration files. These are STRICTLY READ-ONLY:
-    - package.json
-    - tsconfig.json
-    - next.config.js / next.config.mjs
-    - tailwind.config.js / tailwind.config.ts
-    - postcss.config.js
-    - eslint config files
+  - NEVER modify any configuration or root-level files. These are STRICTLY READ-ONLY, including but not limited to:
+    - package.json, pnpm-lock.yaml, package-lock.json
+    - tsconfig.* files
+    - next.config.* files
+    - tailwind.config.* files
+    - postcss.config.* files
+    - .eslintrc* files
+    - .prettierrc* files
+    - .vscode/*
   - Only update project source files or create new files if required by the user's request.
-  - **Do not remove or overwrite existing code in any file unless explicitly instructed.**
-  - If a new component is created or an existing component is updated, **update only the src/app/page.tsx file** to include it.
+  - **Do not remove, rewrite, refactor, reorder, or format existing code in any file unless explicitly instructed. Make only the minimal edits required.**
+  - When updating or creating components, you must verify the following BEFORE editing page.tsx:
+      1. If an import for the component already exists in src/app/page.tsx, do NOT add another import.
+      2. If a JSX element for the component already exists in src/app/page.tsx, do NOT insert another JSX element.
+      3. Only insert the component if it does not already exist.
+  - If a new component is created or an existing component is updated, you must update only the src/app/page.tsx file for integration.
   - Do NOT modify layout.tsx or any other parent files; every new component must be added only to page.tsx.
-  - Insert new components at the position requested by the user, or if unspecified, **append after the last existing JSX element in page.tsx**.
+  - When inserting new components into page.tsx, insert the JSX immediately before the final closing parent JSX tag (e.g., before </main>) unless the user specifies a position.
+  - Do NOT add extra props, hooks, imports, or functionality unless explicitly required by the user's request.
   - All updated or created files must be plug-and-play: imports, types, hooks, and functionality must work correctly.
+  - Avoid assumptions and hallucinations. Only modify code that is explicitly referenced by the user request.
 
   Response Format:
 
-  - Return ONLY a JSON array.
+  - Return ONLY a JSON array (no surrounding object).
   - Each item in the array must be an object where the key is the file path, and the value is the full updated or newly created file content.
   - Only return files that were modified or created.
+  - The response must be directly parseable with JSON.parse.
+  - Do not include explanations, comments, or Markdown in the response.
 
   Examples:
 
@@ -847,43 +524,49 @@ export const updateWebsitePrompt = (
   \`\`\`
 
   Response:
-  {
-    "code": [
-      {
-        "src/components/Footer.tsx": "import React from 'react';\\n\\nexport default function Footer() {\\n  return (<footer>\\n    <p>© 2025 Company Name</p>\\n    <a href='/about'>About</a>\\n    <a href='/contact'>Contact</a>\\n  </footer>);\\n}"
-      },
-      {
-        "src/app/page.tsx": "import React from 'react';\\nimport HeroSection from '../components/HeroSection';\\nimport Footer from '../components/Footer';\\n\\nexport default function Page() {\\n  return (<main>\\n    <h1>Welcome to our site</h1>\\n    <HeroSection />\\n    <Footer />\\n  </main>);\\n}"
-      }
-    ]
-  }
+  [
+    {
+      "src/components/Footer.tsx": "import React from 'react';\\n\\nexport default function Footer() {\\n  return (<footer>\\n    <p>© 2025 Company Name</p>\\n    <a href='/about'>About</a>\\n    <a href='/contact'>Contact</a>\\n  </footer>);\\n}"
+    },
+    {
+      "src/app/page.tsx": "import React from 'react';\\nimport HeroSection from '../components/HeroSection';\\nimport Footer from '../components/Footer';\\n\\nexport default function Page() {\\n  return (<main>\\n    <h1>Welcome to our site</h1>\\n    <HeroSection />\\n    <Footer />\\n  </main>);\\n}"
+    }
+  ]
 
-  Example 2 – Updating Navbar:
+  Example 2 – Updating a file:
   User Request: "Add a new navigation link 'Pricing' in the Navbar."
 
-  Response:
-  {
-    "code": [      
-        {
-          "src/components/Navbar.tsx": "import React from 'react';\\n\\nexport default function Navbar() {\\n  return (<nav>\\n    <a href='/home'>Home</a>\\n    <a href='/about'>About</a>\\n    <a href='/pricing'>Pricing</a>\\n  </nav>);\\n}"
-        },
-        {
-          "src/app/page.tsx": "import React from 'react';\\nimport Navbar from '../components/Navbar';\\n\\nexport default function Page() {\\n  return (<main>\\n    <Navbar />\\n  </main>);\\n}"
-        }      
-    ]
+  Current src/app/page.tsx file:
+  \`\`\`tsx
+  export default function Page() {
+    return (
+      <main>
+        // existing content
+        <Navbar />
+      </main>
+    );
   }
+  \`\`\`
+
+  Response:
+  [
+    {
+      "src/components/Navbar.tsx": "import React from 'react';\\n\\nexport default function Navbar() {\\n  return (<nav>\\n    <a href='/home'>Home</a>\\n    <a href='/about'>About</a>\\n    <a href='/pricing'>Pricing</a>\\n  </nav>);\\n}"
+    }
+  ]
 
   Rules:
 
   1. Do not include explanations or Markdown in the response.
-  2. Do not modify config files or unrelated files.
+  2. Do not modify configuration files or unrelated files.
   3. Preserve all existing code unless explicitly instructed to remove it.
-  4. Always ensure code is valid, functional, and plug-and-play.
-  5. Always include required imports, hooks, and types.
-  6. Automatically update src/app/page.tsx whenever a new component is created or an existing component is updated. **Never update layout.tsx or other files.**
-  7. Insert new components at the position requested by the user, or append if unspecified.
-  8. The response must be directly parseable with JSON.parse.
-  9. Only return files that were modified or created.
+  4. Do not reorganize, reformat, refactor, reorder, or rewrite code.
+  5. Always ensure code is valid, functional, and plug-and-play.
+  6. Always verify component existence before inserting imports or JSX.
+  7. Always update src/app/page.tsx for component integration and never update layout.tsx or other files.
+  8. Insert new component JSX before the final closing parent tag in page.tsx unless the user specifies a position.
+  9. The response must be directly JSON.parse compatible.
+  10. Only return files that were modified or created.
 
-  Now, consider the project structure and the user's request, and output the updated or newly created files exactly as they should exist in the project, updating only page.tsx for parent integration.
-`;
+  Now, consider the project structure and the user's request, and output the updated or newly created files exactly as they should exist in the project.
+`

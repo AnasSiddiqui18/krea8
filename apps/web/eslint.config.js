@@ -1,1 +1,1 @@
-export { config } from "@repo/config/eslint-next";
+export { config } from "@repo/config/eslint-next"

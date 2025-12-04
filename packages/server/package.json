@@ -1,33 +1,33 @@
 {
-  "name": "@repo/server",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "format": "prettier --write \"**/*.{js,mjs,ts,tsx,md,json,css}\""
-  },
-  "exports": {
-    "./*": "./src/*"
-  },
-  "devDependencies": {
-    "@repo/config": "*",
-    "@types/bun": "latest",
-    "@types/dockerode": "^3.3.47",
-    "dockerode": "^4.0.9",
-    "drizzle-kit": "^0.31.6"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@ai-sdk/google": "^2.0.28",
-    "@neondatabase/serverless": "^1.0.2",
-    "ai": "^5.0.82",
-    "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.7",
-    "get-port-please": "^3.2.0",
-    "hono": "^4.10.3",
-    "zod": "^4.1.12"
-  }
+    "name": "@repo/server",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "bun --watch src/index.ts",
+        "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,css,mdx}\""
+    },
+    "exports": {
+        "./*": "./src/*"
+    },
+    "devDependencies": {
+        "@repo/config": "*",
+        "@types/bun": "latest",
+        "@types/dockerode": "^3.3.47",
+        "dockerode": "^4.0.9",
+        "drizzle-kit": "^0.31.6"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@ai-sdk/google": "^2.0.28",
+        "@neondatabase/serverless": "^1.0.2",
+        "ai": "^5.0.82",
+        "dotenv": "^17.2.3",
+        "drizzle-orm": "^0.44.7",
+        "get-port-please": "^3.2.0",
+        "hono": "^4.10.3",
+        "zod": "^4.1.12"
+    }
 }

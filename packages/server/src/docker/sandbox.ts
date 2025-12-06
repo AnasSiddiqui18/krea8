@@ -122,7 +122,7 @@ export class Sandbox {
             }
 
             {
-                console.log("Running dev server")
+                console.log("Spinning dev server")
 
                 const exec = await container.exec({
                     Cmd: ["npm", "run", "dev"],
@@ -132,14 +132,24 @@ export class Sandbox {
                 })
 
                 const stream = await exec.start({ hijack: false })
+
                 container.modem.demuxStream(stream, process.stdout, process.stderr)
 
-                this.activeContainers.set(sbxId, {
-                    ...prev,
-                    isServerReady: true,
+                await new Promise((resolve, reject) => {
+                    stream.on("close", () => {
+                        console.log("closing dev process")
+                        resolve(true)
+                    })
+                    stream.on("data", () => {
+                        console.log("DEV server running!!")
+                        this.activeContainers.set(sbxId, { ...prev, isServerReady: true })
+                        resolve(true)
+                    })
+                    stream.on("error", (e: any) => {
+                        console.log("failed to run dev server", e)
+                        reject(e)
+                    })
                 })
-
-                console.log("Dev server is running!!")
             }
         } catch (error: any) {
             console.log("failed to spin up container", error)

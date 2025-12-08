@@ -2,7 +2,7 @@ import { Button } from "@repo/ui/components/button"
 import { Textarea } from "@repo/ui/components/textarea"
 import { SendIcon } from "lucide-react"
 import { MessageBox } from "./message-box"
-import { useChatMessages, useChatStatus, useChatStore } from "@ai-sdk-tools/store"
+import { useChatStatus, useChatStore } from "@ai-sdk-tools/store"
 import { TextShimmer } from "@repo/ui/components/text-shimmer"
 import { redirect } from "next/navigation"
 import { useEffect, useRef } from "react"
@@ -17,31 +17,16 @@ import { useSnapshot } from "@/hooks/use-snapshot"
 import { globalStore } from "@/store/global.store"
 
 export function ChatInterface() {
-    const messages = useChatMessages()
     const status = useChatStatus()
     const chatElRef = useRef<HTMLDivElement | null>(null)
-    const { pushMessage } = useChatStore()
+    const { pushMessage, messages } = useChatStore()
     const { sbxId } = useSnapshot(globalStore)
     const processedPaths = useRef<Map<string, string>>(new Map())
     const hasInitialMessagePushed = useRef(false)
 
     const { object, submit } = useObject({
         api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/update-website/${sbxId}`,
-        fetch: (async (input, init = {}) => {
-            const mergedInit: RequestInit = {
-                ...init,
-                method: "PATCH",
-                headers: {
-                    ...(init.headers instanceof Headers
-                        ? Object.fromEntries((init.headers as Headers).entries())
-                        : (init.headers as Record<string, string> | undefined)),
-                    "Content-Type": "application/json",
-                },
-                credentials: init.credentials ?? "same-origin",
-            }
-
-            return fetch(input, mergedInit)
-        }) as typeof fetch,
+        fetch: (async (input, init) => fetch(input, { ...init, method: "PATCH" })) as typeof fetch,
         schema: websiteUpdateSchema,
         onFinish: async (event) => {
             if (event.error) {
@@ -52,48 +37,37 @@ export function ChatInterface() {
             console.log("website updated")
             hasInitialMessagePushed.current = false
             processedPaths.current = new Map()
+
+            const outroMessage = event.object?.outro_message
+
+            if (outroMessage) {
+                pushMessage({
+                    id: crypto.randomUUID(),
+                    role: "assistant",
+                    parts: [{ text: outroMessage, type: "text" }],
+                })
+            }
         },
     })
 
     useEffect(() => {
-        if (object) {
-            if (object.initial_message) {
-                if (!hasInitialMessagePushed.current) {
-                    hasInitialMessagePushed.current = true
-                    pushMessage({
-                        id: crypto.randomUUID(),
-                        role: "assistant",
-                        parts: [{ text: object.initial_message, type: "text" }],
-                    })
-                }
-            }
+        if (object && object.code) {
+            const currentFile = object.code.at(-1)
+            const currentPath = currentFile?.path
+            const currentAction = currentFile?.action
+            const isPathValid = isValidPath(currentPath)
+            const fileName = currentFile?.path?.split("/").at(-1)
 
-            if (object.outro_message) {
+            if (currentPath && isPathValid && currentAction && !processedPaths.current.has(currentPath)) {
+                const content = `<krea8-file-action name=${fileName} action='${currentFile.action}' path='${currentFile.path}'></krea8-file-action>`
+
+                processedPaths.current.set(currentPath, currentAction)
+
                 pushMessage({
                     id: crypto.randomUUID(),
                     role: "assistant",
-                    parts: [{ text: object.outro_message, type: "text" }],
+                    parts: [{ text: content, type: "text" }],
                 })
-            }
-
-            if (object.code) {
-                const currentFile = object.code.at(-1)
-                const currentPath = currentFile?.path
-                const currentAction = currentFile?.action
-                const isPathValid = isValidPath(currentPath)
-                const fileName = currentFile?.path?.split("/").at(-1)
-
-                if (currentPath && isPathValid && currentAction && !processedPaths.current.has(currentPath)) {
-                    const content = `<krea8-file-action name=${fileName} action='${currentFile.action}' path='${currentFile.path}'></krea8-file-action>`
-
-                    processedPaths.current.set(currentPath, currentAction)
-
-                    pushMessage({
-                        id: crypto.randomUUID(),
-                        role: "assistant",
-                        parts: [{ text: content, type: "text" }],
-                    })
-                }
             }
         }
     }, [object])

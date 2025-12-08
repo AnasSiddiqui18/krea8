@@ -1,6 +1,5 @@
 import { Button } from "@repo/ui/components/button"
-import { Input } from "@repo/ui/components/input"
-import { Code, Eye, RotateCw, SquareArrowOutUpRight } from "lucide-react"
+import { RotateCw, SquareArrowOutUpRight } from "lucide-react"
 import { useState } from "react"
 import { IDE } from "./ide"
 import { PreviewComponent } from "./preview-component"

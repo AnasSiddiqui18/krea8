@@ -40,11 +40,6 @@ export const fragmentSchema = z.object({
 })
 
 export const websiteUpdateSchema = z.object({
-    initial_message: z
-        .string()
-        .describe(
-            "A short confirmation sentence BEFORE providing any code changes. This must clearly state that the LLM fully understands the user's request and is about to begin applying the requested feature or updates.",
-        ),
     code: z
         .array(
             z.object({

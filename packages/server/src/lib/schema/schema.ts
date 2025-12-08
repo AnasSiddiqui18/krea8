@@ -65,11 +65,6 @@ export const websiteUpdatePlanSchema = z.object({
 })
 
 export const websiteUpdateSchema = z.object({
-    initial_message: z
-        .string()
-        .describe(
-            "A short confirmation sentence BEFORE providing any code changes. This must clearly state that the LLM fully understands the user's request and is about to begin applying the requested feature or updates.",
-        ),
     code: z
         .array(
             z.object({
@@ -83,10 +78,9 @@ export const websiteUpdateSchema = z.object({
             }),
         )
         .describe("An array containing multiple files on which actions need to be performed"),
-
     outro_message: z
         .string()
         .describe(
-            "A short closing sentence AFTER all code changes. This must clearly state that the requested modifications have been completed and delivered.",
+            "A comprehensive closing confirmation AFTER all code changes have been successfully applied. This should clearly communicate that the request is fully completed, summarize what was updated in simple language, and reassure the user that no further action is required on their part. Use a friendly and professional tone, thank the user, and provide a final confirmation that the modification has been delivered exactly as specified.",
         ),
 })

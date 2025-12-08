@@ -12,7 +12,7 @@ export function PreviewComponent({ className, ...props }: PreviewComponentProps)
             <iframe
                 id="iframeEL"
                 className={cn("h-full w-full hidden", !isPreviewLoading && "block")}
-                src={server_url ?? ""}
+                src={server_url ?? undefined}
             />
             <div className={cn("flex-col items-center justify-center gap-3 py-10 hidden", isPreviewLoading && "flex")}>
                 <div className="relative">

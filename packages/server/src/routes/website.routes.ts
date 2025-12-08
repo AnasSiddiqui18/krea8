@@ -75,6 +75,7 @@ websiteRouter.patch("/update-website/:sbxId", async (c) => {
     try {
         const { sbxId } = c.req.param()
         const { prompt } = await c.req.json()
+
         const projectFiles = getProjectStructure(sbxId)
 
         const stream = streamObject({
@@ -94,6 +95,7 @@ websiteRouter.patch("/update-website/:sbxId", async (c) => {
 
         return stream.toTextStreamResponse()
     } catch (error) {
+        console.log("failed to update", error)
         return c.json({
             sucess: false,
             message: "failed to update file",

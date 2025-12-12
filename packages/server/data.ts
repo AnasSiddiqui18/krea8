@@ -220,4 +220,4 @@ export default config;`,
     "typescript": "^5"
   }
 }`,
-}
+} as Record<string, string>

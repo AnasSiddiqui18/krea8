@@ -1,6 +1,7 @@
 import fs from "fs"
 import path from "path"
 import { getPort } from "get-port-please"
+import { NextTemplate } from "data"
 
 const getFoldersPath = (filePath: string) => {
     const segments = filePath.split("/").filter(Boolean)
@@ -105,6 +106,30 @@ export function getProjectStructure(sbxId: string) {
     })
 
     // fs.writeFileSync("data.json", JSON.stringify(object, null, 2));
+
+    return object
+}
+
+export function extractCodeContent(code: Record<string, string>[]) {
+    const object = { ...NextTemplate }
+
+    code.forEach((c) => {
+        const { file_content, file_path } = c
+
+        if (!file_content || !file_path) {
+            console.error("file path or content not found")
+            return null
+        }
+
+        const regex = /<coderocketFile[^>]*>([\s\S]*?)<\/coderocketFile>/
+        const match = file_content.match(regex)
+
+        if (match && match[1]) {
+            object[file_path] = match[1]
+        } else {
+            console.error(`failed to get content for path`, file_path, file_content)
+        }
+    })
 
     return object
 }

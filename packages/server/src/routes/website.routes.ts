@@ -4,8 +4,16 @@ import { model } from "../lib/ai/google"
 import { HTTPException } from "hono/http-exception"
 import { fragmentSchema, websiteUpdateSchema } from "@/lib/schema/schema"
 import { Hono } from "hono"
-import { getAvailablePort, getProjectStructure, updateOrCreateFiles } from "@/helpers/helpers"
+import {
+    createFolderTree,
+    extractCodeContent,
+    getAvailablePort,
+    getProjectStructure,
+    updateOrCreateFiles,
+} from "@/helpers/helpers"
 import { NextTemplate } from "data"
+import { Sandbox } from "@/docker/sandbox"
+import { activeContainers } from "@/shared"
 
 export const websiteRouter = new Hono()
 
@@ -44,6 +52,14 @@ websiteRouter.post("/init", async (c) => {
 websiteRouter.post("/create-website", async (c) => {
     try {
         const { prompt } = await c.req.json()
+        const portRes = await getAvailablePort()
+        const sbxId = crypto.randomUUID()
+
+        if (!portRes.success) {
+            return c.json({ success: false, message: "Failed to get port" })
+        }
+
+        const sandbox = new Sandbox(portRes.data.toString(), activeContainers)
 
         if (!prompt) throw new HTTPException(400, { message: "Prompt not found" })
 
@@ -59,7 +75,23 @@ websiteRouter.post("/create-website", async (c) => {
         const stream = streamObject({
             model,
             schema: fragmentSchema,
-            prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate),
+            prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate, sbxId),
+            onFinish: (c) => {
+                const code = c.object?.code
+
+                if (!code) return console.log("code not found")
+
+                const object = extractCodeContent(code)
+                activeContainers.set(sbxId, {
+                    isServerReady: false,
+                    errorMessage: null,
+                    port: port.data.toString(),
+                    hasError: false,
+                })
+
+                createFolderTree(sbxId, object)
+                sandbox.getOrPullImage("node:25-alpine3.21", sbxId)
+            },
         })
 
         console.log("returning response")

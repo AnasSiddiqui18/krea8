@@ -8,7 +8,7 @@ import { globalStore } from "@/store/global.store"
 import { useChat, useChatStore } from "@ai-sdk-tools/store"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
 import { fragmentSchema } from "@/schema/schema"
-import { convertFilesToTree, convertObjToArr, extractCodeContent, isValidPath } from "@/shared/shared"
+import { convertFilesToTree, isValidPath } from "@/shared/shared"
 import { DefaultChatTransport } from "ai"
 import { useQuery } from "@tanstack/react-query"
 import { sandbox } from "@/queries/sandbox.queries"
@@ -41,31 +41,19 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
                 })
             }
 
-            const code = event.object?.code
+            if (!event?.object?.code) return console.error("code not found")
+            if (!event?.object?.sandboxId) return console.error("sandboxId not found")
 
-            console.log("website generation finished")
-
-            if (code?.length) {
-                const updatedObj = extractCodeContent(code)
-                const arr = convertObjToArr(updatedObj)
-                const structuredFiles = convertFilesToTree(arr)
-                globalStore.fileTree = structuredFiles
-
-                try {
-                    const response = await sandbox.create(updatedObj)
-                    if (response.success && response.data) {
-                        const sandboxId = response.data.sbxId
-                        setSbxId(sandboxId)
-                        globalStore.sbxId = sandboxId
-                    }
-                } catch (error) {
-                    console.log("failed to call /sandbox/create", error)
-                }
-            }
+            const code = event.object.code
+            const sbdxId = event.object.sandboxId
+            const structuredFiles = convertFilesToTree(code)
+            globalStore.fileTree = structuredFiles
+            globalStore.sbxId = sbdxId
+            setSbxId(sbdxId)
         },
     })
 
-    const { data } = useQuery({
+    useQuery({
         queryKey: ["get_status"],
         refetchOnMount: false,
         enabled: !!sbxId,
@@ -74,7 +62,11 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
         refetchInterval: ({ state }) => {
             const data = state.data
             if (!data) return false
-            if (data.status && data.status === "progress") return 5000
+            if (data.status === "progress") return 5000
+            if (data.status === "completed") {
+                globalStore.isPreviewLoading = false
+                globalStore.server_url = data.server_url
+            }
             return false
         },
         queryFn: async () => {
@@ -105,13 +97,6 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
             globalStore.isPreviewLoading = true
         },
     })
-
-    useEffect(() => {
-        if (data && data.server_url) {
-            globalStore.isPreviewLoading = false
-            globalStore.server_url = data.server_url
-        }
-    }, [data])
 
     useEffect(() => {
         if (object && object.code) {

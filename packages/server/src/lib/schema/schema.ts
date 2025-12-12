@@ -1,6 +1,12 @@
 import z from "zod"
 
 export const fragmentSchema = z.object({
+    sandboxId: z
+        .string()
+        .describe(
+            "A unique sandbox identifier generated at the start of the website creation process. The client must store this value to track the sandbox state and interact with its runtime environment.",
+        ),
+
     code: z.array(
         z.object({
             action: z.enum(["creating", "updating"]).describe(`

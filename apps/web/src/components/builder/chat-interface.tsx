@@ -26,7 +26,7 @@ export function ChatInterface() {
 
     const { object, submit } = useObject({
         api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/update-website/${sbxId}`,
-        fetch: (async (input, init) => fetch(input, { ...init, method: "PATCH" })) as typeof fetch,
+        fetch: (async (url, init) => fetch(url, { ...init, method: "PATCH" })) as typeof fetch,
         schema: websiteUpdateSchema,
         onFinish: async (event) => {
             if (event.error) {

@@ -1,77 +1,8 @@
 import { Hono } from "hono"
-import { createFolderTree, getAvailablePort, getFile, updateFile } from "@/helpers/helpers"
-import { Sandbox } from "@/docker/sandbox"
+import { getFile, updateFile } from "@/helpers/helpers"
+import { activeContainers } from "@/shared"
 
 export const sandboxRouter = new Hono()
-
-let sbxId = ""
-
-const activeContainers = new Map<
-    string,
-    {
-        isServerReady: boolean
-        hasError: boolean
-        errorMessage: string | null
-        port: string
-    }
->()
-
-const images = {
-    node: "node:25-alpine3.21",
-}
-
-sandboxRouter.post("/create", async (c) => {
-    try {
-        const { files } = await c.req.json()
-
-        const portRes = await getAvailablePort()
-
-        if (!portRes.success) {
-            return c.json({
-                success: false,
-                message: "Failed to get port",
-            })
-        }
-
-        const { data: port } = portRes
-
-        const sandbox = new Sandbox(String(port), activeContainers)
-
-        const imageName = images["node"]
-        sbxId = crypto.randomUUID()
-
-        activeContainers.set(sbxId, {
-            isServerReady: false,
-            errorMessage: null,
-            port: port.toString(),
-            hasError: false,
-        })
-
-        console.log("saving files to disk")
-
-        const response = await createFolderTree(sbxId, files)
-
-        if (!response.success) {
-            return c.json({
-                message: "failed to save files on disk",
-            })
-        }
-
-        sandbox.getOrPullImage(imageName, sbxId)
-
-        return c.json({
-            success: true,
-            message: "Sandbox created successfully",
-            sbxId,
-        })
-    } catch (error) {
-        return c.json({
-            success: false,
-            message: "Failed to create sandbox",
-            sbxId: null,
-        })
-    }
-})
 
 sandboxRouter.get("/status/:sbxId", async (c) => {
     try {
@@ -126,11 +57,7 @@ sandboxRouter.get("/file/:sbxId", async (c) => {
         const { filePath } = c.req.query()
         const { sbxId } = c.req.param()
 
-        if (!filePath || !sbxId) {
-            return c.json({
-                message: "file and sandbox id is required",
-            })
-        }
+        if (!filePath || !sbxId) return c.json({ message: "file and sandbox id is required" })
 
         const response = await getFile(filePath, sbxId)
 
@@ -142,16 +69,9 @@ sandboxRouter.get("/file/:sbxId", async (c) => {
             })
         }
 
-        return c.json({
-            ...response,
-            message: "File get successfully",
-        })
+        return c.json({ ...response, message: "File get successfully" })
     } catch (error) {
-        return c.json({
-            message: "failed to get file",
-            file: null,
-            success: false,
-        })
+        return c.json({ message: "failed to get file", file: null, success: false })
     }
 })
 

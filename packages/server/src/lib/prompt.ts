@@ -54,7 +54,12 @@ export const projectTemplateSchema = z.object({
     }),
 })
 
-export const generateWebsitePrompt = (userPrompt: string, port: string, initialTemplate: Record<string, string>) => `
+export const generateWebsitePrompt = (
+    userPrompt: string,
+    port: string,
+    initialTemplate: Record<string, string>,
+    sbxId: string,
+) => `
 You are a professional code generator AI. Your task is to generate or update files for a Next.js 15.1.3 project using the following starter template:
 
 
@@ -77,6 +82,12 @@ my-next-app/
 
 **User requirements:**  
 "${userPrompt}"
+
+
+sbxId
+
+${sbxId}
+
 
 --- IMPORTANT: Create separate, reusable components where applicable.  
 

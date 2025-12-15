@@ -2,17 +2,36 @@ import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { websiteRouter } from "./routes/website.routes"
 import { sandboxRouter } from "./routes/sandbox.routes"
+import { __auth } from "@/auth/auth"
+import { contextStorage } from "hono/context-storage"
+import type { Variables } from "./types"
 
-export const app = new Hono()
+type THono = { Variables: Variables }
+const app = new Hono<THono>()
 
 app.use(
     "*",
     cors({
-        origin: "*",
+        origin: "http://localhost:3002",
         allowHeaders: ["Content-Type", "Authorization"],
-        allowMethods: ["*"],
+        credentials: true,
+        allowMethods: ["POST", "GET", "OPTIONS"],
     }),
 )
+
+app.use(contextStorage())
+
+app.use("*", async (c, next) => {
+    const { auth, db } = __auth()
+    c.set("auth", auth)
+    c.set("db", db)
+    await next()
+})
+
+app.on(["POST", "GET"], "/api/auth/*", async (c) => {
+    const auth = c.get("auth")
+    return await auth.handler(c.req.raw)
+})
 
 app.get("/", (c) => {
     return c.json({

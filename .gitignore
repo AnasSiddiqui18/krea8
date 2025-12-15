@@ -36,3 +36,12 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# ignore todo
+
+todo
+
+
+# ignore db sql schema
+
+drizzle

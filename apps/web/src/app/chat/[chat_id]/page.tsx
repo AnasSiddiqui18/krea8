@@ -75,14 +75,16 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
                 return null
             }
 
-            const data = await sandbox.getCreationStatus(sbxId)
+            const { success, data } = await sandbox.getCreationStatus(sbxId)
 
-            if (!data.success) {
+            if (!success) {
                 console.error("Failed to get status")
                 return null
             }
 
-            return data.data
+            globalStore.isPreviewLoading = false
+            globalStore.server_url = data.server_url
+            return data
         },
     })
 

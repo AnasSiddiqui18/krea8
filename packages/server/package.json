@@ -5,7 +5,9 @@
     "private": true,
     "scripts": {
         "dev": "bun --watch src/index.ts",
-        "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,css,mdx}\""
+        "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,css,mdx}\"",
+        "db:generate": "npx drizzle-kit generate",
+        "db:migrate": "npx drizzle-kit migrate"
     },
     "exports": {
         "./*": "./src/*"
@@ -22,10 +24,13 @@
     },
     "dependencies": {
         "@ai-sdk/google": "^2.0.28",
+        "@hono/zod-validator": "^0.7.5",
         "@neondatabase/serverless": "^1.0.2",
+        "@t3-oss/env-core": "^0.13.8",
         "ai": "^5.0.82",
+        "better-auth": "^1.4.6",
         "dotenv": "^17.2.3",
-        "drizzle-orm": "^0.44.7",
+        "drizzle-orm": "^0.45.0",
         "get-port-please": "^3.2.0",
         "hono": "^4.10.3",
         "zod": "^4.1.12"

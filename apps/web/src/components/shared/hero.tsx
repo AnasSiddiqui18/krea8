@@ -11,6 +11,7 @@ import { promptSchema } from "@/schema/schema"
 import z from "zod"
 import { globalStore } from "@/store/global.store"
 import { redirect } from "next/navigation"
+import { authClient } from "@/lib/auth-client"
 
 export function Hero() {
     return (
@@ -51,7 +52,9 @@ function MainPromptArea() {
         defaultValues: { prompt: "" },
     })
 
-    function onSubmit(value: z.infer<typeof promptSchema>) {
+    async function onSubmit(value: z.infer<typeof promptSchema>) {
+        const session = await authClient.getSession()
+        if (!session.data) redirect("/auth/signup")
         const { prompt } = value
         globalStore.initial_prompt = prompt
         redirect("/chat/1234")

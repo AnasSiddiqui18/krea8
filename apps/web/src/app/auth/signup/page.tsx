@@ -11,7 +11,6 @@ import { AlertCircleIcon, Loader2Icon } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert"
 import { authClient } from "@/lib/auth-client"
 import { signUpValidation } from "@/schema/auth"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 
 export default function SignUpPage() {
@@ -36,7 +35,7 @@ export default function SignUpPage() {
             return response.data
         },
         onSuccess() {
-            redirect("/")
+            window.location.href = "/"
         },
     })
 
@@ -57,6 +56,7 @@ export default function SignUpPage() {
                                 render={({ field }) => (
                                     <FormItem className="space-y-1">
                                         <FormLabel>Name</FormLabel>
+                                        {/* <Spinner /> */}
                                         <FormControl>
                                             <Input
                                                 autoComplete="username"

@@ -15,7 +15,7 @@ import { authClient } from "@/lib/auth-client"
 
 export function Hero() {
     return (
-        <div className="flex flex-col h-full items-center max-w-5xl mx-auto px-6 text-center pt-16">
+        <div className="flex flex-col items-center max-w-5xl mx-auto px-6 text-center pt-16">
             <div className="flex flex-col gap-8 mb-8">
                 <h1 className="text-7xl font-semibold tracking-tight leading-tight text-balance">
                     <span className="text-muted-foreground block">

@@ -2,25 +2,24 @@
     "name": "@repo/server",
     "module": "index.ts",
     "type": "module",
+    "version": "1.0.0",
     "private": true,
     "scripts": {
         "dev": "bun --watch src/index.ts",
         "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,css,mdx}\"",
         "db:generate": "npx drizzle-kit generate",
-        "db:migrate": "npx drizzle-kit migrate"
+        "db:migrate": "npx drizzle-kit migrate",
+        "check-types": "tsc --noEmit"
     },
     "exports": {
         "./*": "./src/*"
     },
     "devDependencies": {
         "@repo/config": "*",
-        "@types/bun": "latest",
         "@types/dockerode": "^3.3.47",
         "dockerode": "^4.0.9",
-        "drizzle-kit": "^0.31.6"
-    },
-    "peerDependencies": {
-        "typescript": "^5"
+        "drizzle-kit": "^0.31.6",
+        "typescript": "5.9.2"
     },
     "dependencies": {
         "@ai-sdk/google": "^2.0.28",
@@ -30,7 +29,6 @@
         "ai": "^5.0.82",
         "better-auth": "^1.4.6",
         "dotenv": "^17.2.3",
-        "drizzle-orm": "^0.45.0",
         "get-port-please": "^3.2.0",
         "hono": "^4.10.3",
         "zod": "^4.1.12"

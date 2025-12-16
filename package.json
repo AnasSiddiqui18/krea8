@@ -22,6 +22,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "@ai-sdk-tools/store": "^1.0.8"
+    "drizzle-orm": "^0.41.0"
   }
 }

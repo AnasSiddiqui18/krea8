@@ -1,6 +1,6 @@
 {
     "name": "web",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "type": "module",
     "private": true,
     "scripts": {
@@ -13,7 +13,9 @@
         "format": "prettier --write \"**/*.{js,mjs,ts,tsx,md,json,css}\""
     },
     "dependencies": {
+        "@ai-sdk-tools/store": "^1.2.0",
         "@ai-sdk/react": "^2.0.89",
+        "@heroui/react": "^2.8.6",
         "@hookform/resolvers": "^5.2.2",
         "@monaco-editor/react": "^4.7.0",
         "@repo/server": "*",

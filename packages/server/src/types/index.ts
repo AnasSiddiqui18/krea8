@@ -1,4 +1,4 @@
-import * as schema from "@/db/schema/auth.schema"
+import * as schema from "@/db/schema/index"
 import type { NeonQueryFunction } from "@neondatabase/serverless"
 import type { betterAuth } from "better-auth"
 import type { NeonHttpDatabase } from "drizzle-orm/neon-http"

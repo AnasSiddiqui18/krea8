@@ -2,8 +2,7 @@ import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { websiteRouter } from "./routes/website.routes"
 import { sandboxRouter } from "./routes/sandbox.routes"
-import { __auth } from "@/auth/auth"
-import { contextStorage } from "hono/context-storage"
+import { auth } from "@/auth/auth"
 import type { Variables } from "./types"
 
 type THono = { Variables: Variables }
@@ -15,21 +14,11 @@ app.use(
         origin: "http://localhost:3002",
         allowHeaders: ["Content-Type", "Authorization"],
         credentials: true,
-        allowMethods: ["POST", "GET", "OPTIONS"],
+        allowMethods: ["*"],
     }),
 )
 
-app.use(contextStorage())
-
-app.use("*", async (c, next) => {
-    const { auth, db } = __auth()
-    c.set("auth", auth)
-    c.set("db", db)
-    await next()
-})
-
 app.on(["POST", "GET"], "/api/auth/*", async (c) => {
-    const auth = c.get("auth")
     return await auth.handler(c.req.raw)
 })
 

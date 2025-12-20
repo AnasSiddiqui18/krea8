@@ -3,9 +3,9 @@ import { globalStore } from "@/store/global.store"
 import { cn } from "@repo/ui/lib/utils"
 import { FileCode } from "lucide-react"
 import Markdown from "react-markdown"
-import rehypeRaw from "rehype-raw"
 import { sandbox } from "@/queries/sandbox.queries"
 import { getParentFolderIds } from "@/shared/shared"
+import rehypeRaw from "rehype-raw"
 
 export function MessageBox({ content, role }: any) {
     const { sbxId, fileTree } = useSnapshot(globalStore)
@@ -83,7 +83,7 @@ export function MessageBox({ content, role }: any) {
     } as Record<string, any>
 
     return (
-        <div className={cn(role === "assistant" ? "justify-start" : "flex")}>
+        <div className={cn(role !== "assistant" && "flex justify-end")}>
             <div
                 className={cn(
                     "rounded-2xl px-4 py-2 prose text-sm leading-relaxed transition-all duration-200",
@@ -92,7 +92,7 @@ export function MessageBox({ content, role }: any) {
                         : "bg-primary text-primary-foreground rounded-tr-none",
                 )}
             >
-                <Markdown components={components} rehypePlugins={[rehypeRaw]}>
+                <Markdown rehypePlugins={[rehypeRaw]} components={components}>
                     {content}
                 </Markdown>
             </div>

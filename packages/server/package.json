@@ -7,6 +7,7 @@
     "scripts": {
         "dev": "bun --watch src/index.ts",
         "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,css,mdx}\"",
+        "db:push": "drizzle-kit push",
         "db:generate": "npx drizzle-kit generate",
         "db:migrate": "npx drizzle-kit migrate",
         "check-types": "tsc --noEmit"

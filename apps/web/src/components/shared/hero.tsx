@@ -12,6 +12,7 @@ import z from "zod"
 import { globalStore } from "@/store/global.store"
 import { redirect } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
+import { axios } from "@/lib/axios"
 
 export function Hero() {
     return (
@@ -57,7 +58,14 @@ function MainPromptArea() {
         if (!session.data) redirect("/auth/signup")
         const { prompt } = value
         globalStore.initial_prompt = prompt
-        redirect("/chat/1234")
+
+        const response = await axios.get("/website/init")
+
+        if ("status" in response.data) {
+            const { project_id } = response.data
+            globalStore.sbxId = project_id
+            redirect(`/projects/${project_id}`)
+        }
     }
 
     return (

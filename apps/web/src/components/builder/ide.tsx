@@ -1,4 +1,4 @@
-import { TreeView, type TreeNode } from "./tree-view-component"
+import { TreeView } from "./tree-view-component"
 import { CodeEditor } from "../editor/code-editor"
 import { useSnapshot } from "@/hooks/use-snapshot"
 import { globalStore } from "@/store/global.store"
@@ -8,7 +8,6 @@ import { cn } from "@repo/ui/lib/utils"
 import { FilePathSelector } from "./file-path-selector"
 import { useMemo } from "react"
 import { Breadcrumb, BreadcrumbList } from "@repo/ui/components/breadcrumb"
-
 import { sandbox } from "@/queries/sandbox.queries"
 
 type IDEProps = React.ComponentProps<"div">
@@ -96,7 +95,7 @@ export function IDE({ className, ...props }: IDEProps) {
                                             label={p.label}
                                             siblings={p.siblings ?? []}
                                             handleSelectFile={handleSelectFile}
-                                            showSeparator={idx !== path.length - 1 ? true : false}
+                                            showSeparator={idx !== path.length - 1}
                                         />
                                     )
                                 })}

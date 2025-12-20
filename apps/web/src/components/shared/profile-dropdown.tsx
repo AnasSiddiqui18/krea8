@@ -1,4 +1,4 @@
-import { LogOut, Settings, User } from "lucide-react"
+import { LogOut, Settings, User as UserIcon } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -6,18 +6,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@repo/ui/components/dropdown-menu"
+import type { User } from "better-auth"
 
 type ProfileDropdownProps = {
-    user: {
-        id: string
-        createdAt: Date
-        updatedAt: Date
-        email: string
-        emailVerified: boolean
-        name: string
-        image?: string | null | undefined
-    }
-
+    user: User
     logout: () => void
 }
 
@@ -28,7 +20,7 @@ export function ProfileDropdown({ session }: { session: ProfileDropdownProps }) 
                 <button className="outline-none">
                     <img
                         className="size-8 rounded-full border"
-                        src={session.user.image ?? "https://github.com/evilrabbit.png"}
+                        src="https://github.com/evilrabbit.png"
                         alt="user-avatar"
                     />
                 </button>
@@ -40,7 +32,7 @@ export function ProfileDropdown({ session }: { session: ProfileDropdownProps }) 
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem className="focus:bg-primary/10">
-                    <User className="mr-2 size-4" />
+                    <UserIcon className="mr-2 size-4" />
                     Profile
                 </DropdownMenuItem>
 

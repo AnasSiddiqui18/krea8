@@ -11,13 +11,50 @@ import {
     getProjectStructure,
     updateOrCreateFiles,
 } from "@/helpers/helpers"
-import { NextTemplate } from "data"
+import { NextTemplate } from "@/data"
 import { Sandbox } from "@/docker/sandbox"
 import { activeContainers } from "@/shared"
+import { project } from "@/db/schema/project.schema"
+import { db } from "@/db/db"
+import { auth } from "@/auth/auth"
 
 export const websiteRouter = new Hono()
 
-websiteRouter.post("/init", async (c) => {
+websiteRouter.get("/init", async (c) => {
+    try {
+        const session = await auth.api.getSession({ headers: c.req.header() })
+
+        if (!session) {
+            return c.json({ sucess: false, message: "failed to get session" }, { status: 400 })
+        }
+
+        const sbxId = crypto.randomUUID()
+        const portRes = await getAvailablePort()
+
+        if (!portRes.success) return c.json({ success: false, message: "Failed to get port" })
+
+        await db.insert(project).values({
+            id: sbxId,
+            url: `http://localhost:${portRes.data}`,
+            userId: session.user.id,
+        })
+
+        activeContainers.set(sbxId, {
+            isServerReady: false,
+            errorMessage: null,
+            port: portRes.data.toString(),
+            hasError: false,
+        })
+
+        return c.json({ status: "init_successfully", server_url: null, project_id: sbxId })
+    } catch (error) {
+        console.log("failed to init", error)
+
+        throw new HTTPException(400, { message: "Failed to init website" })
+    }
+})
+
+websiteRouter.post("/create-plan", async (c) => {
     try {
         const { messages } = await c.req.json()
 
@@ -45,15 +82,15 @@ websiteRouter.post("/init", async (c) => {
             consumeSseStream: consumeStream,
         })
     } catch (error) {
-        throw new HTTPException(400, { message: "Failed to init website" })
+        throw new HTTPException(400, { message: "Failed to create website plan" })
     }
 })
 
-websiteRouter.post("/create-website", async (c) => {
+websiteRouter.post("/create-website/:sbxId", async (c) => {
     try {
         const { prompt } = await c.req.json()
         const portRes = await getAvailablePort()
-        const sbxId = crypto.randomUUID()
+        const { sbxId } = c.req.param()
 
         if (!portRes.success) {
             return c.json({ success: false, message: "Failed to get port" })
@@ -75,19 +112,13 @@ websiteRouter.post("/create-website", async (c) => {
         const stream = streamObject({
             model,
             schema: fragmentSchema,
-            prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate, sbxId),
-            onFinish: (c) => {
-                const code = c.object?.code
+            prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate),
+            onFinish: async (data) => {
+                const code = data.object?.code
 
                 if (!code) return console.log("code not found")
 
                 const object = extractCodeContent(code)
-                activeContainers.set(sbxId, {
-                    isServerReady: false,
-                    errorMessage: null,
-                    port: port.data.toString(),
-                    hasError: false,
-                })
 
                 createFolderTree(sbxId, object)
                 sandbox.getOrPullImage("node:25-alpine3.21", sbxId)
@@ -128,9 +159,12 @@ websiteRouter.patch("/update-website/:sbxId", async (c) => {
         return stream.toTextStreamResponse()
     } catch (error) {
         console.log("failed to update", error)
-        return c.json({
-            sucess: false,
-            message: "failed to update file",
-        })
+        return c.json(
+            {
+                sucess: false,
+                message: "failed to update file",
+            },
+            { status: 400 },
+        )
     }
 })

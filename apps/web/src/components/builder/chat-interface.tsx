@@ -2,7 +2,7 @@ import { Button } from "@repo/ui/components/button"
 import { Textarea } from "@repo/ui/components/textarea"
 import { SendIcon } from "lucide-react"
 import { MessageBox } from "./message-box"
-import { useChatStatus, useChatStore } from "@ai-sdk-tools/store"
+import { useChatMessages, useChatStatus, useChatStore } from "@ai-sdk-tools/store"
 import { TextShimmer } from "@repo/ui/components/text-shimmer"
 import { redirect } from "next/navigation"
 import { useEffect, useRef } from "react"
@@ -19,7 +19,8 @@ import { globalStore } from "@/store/global.store"
 export function ChatInterface() {
     const status = useChatStatus()
     const chatElRef = useRef<HTMLDivElement | null>(null)
-    const { pushMessage, messages } = useChatStore()
+    const { pushMessage } = useChatStore()
+    const messages = useChatMessages()
     const { sbxId } = useSnapshot(globalStore)
     const processedPaths = useRef<Map<string, string>>(new Map())
     const hasInitialMessagePushed = useRef(false)
@@ -37,7 +38,6 @@ export function ChatInterface() {
             console.log("website updated")
             hasInitialMessagePushed.current = false
             processedPaths.current = new Map()
-
             const outroMessage = event.object?.outro_message
 
             if (outroMessage) {
@@ -47,6 +47,19 @@ export function ChatInterface() {
                     parts: [{ text: outroMessage, type: "text" }],
                 })
             }
+        },
+
+        onError() {
+            pushMessage({
+                id: crypto.randomUUID(),
+                role: "assistant",
+                parts: [
+                    {
+                        text: `⚠️ Website update failed. Please try again.`,
+                        type: "text",
+                    },
+                ],
+            })
         },
     })
 
@@ -111,7 +124,11 @@ export function ChatInterface() {
                         <div className="px-2" key={idx}>
                             {msg.parts.map((part, idx) => {
                                 return part.type === "text" ? (
-                                    <MessageBox key={idx} content={part.text} role={msg.role as "assistant" | "user"} />
+                                    <MessageBox
+                                        key={msg.id}
+                                        content={part.text}
+                                        role={msg.role as "assistant" | "user"}
+                                    />
                                 ) : null
                             })}
                         </div>

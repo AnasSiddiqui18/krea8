@@ -24,7 +24,7 @@ type FilePathSelectorProps = {
 export function FilePathSelector({ label, siblings, handleSelectFile, showSeparator }: FilePathSelectorProps) {
     const [open, setOpen] = useState(false)
 
-    function RenderChildren({ label, children }: { label: string; children: fileTreeStructure[] }) {
+    function RenderDir({ label, children }: { label: string; children: fileTreeStructure[] }) {
         return (
             <DropdownMenuSub>
                 <DropdownMenuSubTrigger>{label}</DropdownMenuSubTrigger>
@@ -33,11 +33,7 @@ export function FilePathSelector({ label, siblings, handleSelectFile, showSepara
                         {children.map((child) => {
                             if (child.type === "dir") {
                                 return (
-                                    <RenderChildren
-                                        label={child.label}
-                                        children={child.children ?? []}
-                                        key={child.label}
-                                    />
+                                    <RenderDir label={child.label} children={child.children ?? []} key={child.label} />
                                 )
                             }
 
@@ -64,7 +60,7 @@ export function FilePathSelector({ label, siblings, handleSelectFile, showSepara
                         <span>{label}</span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                        {siblings?.map((sib) => {
+                        {siblings.map((sib) => {
                             if (sib.type === "file") {
                                 return (
                                     <DropdownMenuItem onClick={() => handleSelectFile(sib)} key={sib.label}>
@@ -73,7 +69,7 @@ export function FilePathSelector({ label, siblings, handleSelectFile, showSepara
                                 )
                             }
 
-                            return <RenderChildren label={sib.label} children={sib.children ?? []} key={sib.label} />
+                            return <RenderDir label={sib.label} children={sib.children ?? []} key={sib.label} />
                         })}
                     </DropdownMenuContent>
                 </DropdownMenu>

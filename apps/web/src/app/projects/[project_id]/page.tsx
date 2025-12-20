@@ -5,7 +5,7 @@ import { ChatInterface } from "@/components/builder/chat-interface"
 import { AppPreview } from "@/components/builder/app-preview"
 import { useSnapshot } from "@/hooks/use-snapshot"
 import { globalStore } from "@/store/global.store"
-import { useChat, useChatStore } from "@ai-sdk-tools/store"
+import { useChat, useChatStore, useChatMessages } from "@ai-sdk-tools/store"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
 import { fragmentSchema } from "@/schema/schema"
 import { convertFilesToTree, isValidPath } from "@/shared/shared"
@@ -14,14 +14,14 @@ import { useQuery } from "@tanstack/react-query"
 import { sandbox } from "@/queries/sandbox.queries"
 
 export default function ChatPage({ params }: { params: Promise<{ chat_id: string }> }) {
-    const { initial_prompt } = useSnapshot(globalStore)
+    const { initial_prompt, sbxId } = useSnapshot(globalStore)
     const hasMessageSend = useRef(false)
     const { pushMessage } = useChatStore()
     const processedPaths = useRef<Map<string, string>>(new Map())
-    const [sbxId, setSbxId] = useState<null | string>(null)
+    const [websiteGenerationCompleted, setWebsiteGenerationCompleted] = useState(false)
 
     const { object, submit } = useObject({
-        api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website`,
+        api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website/${sbxId}`,
         schema: fragmentSchema,
         onFinish: async (event) => {
             console.log("finish website creation")
@@ -45,28 +45,38 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
             if (!event?.object?.sandboxId) return console.error("sandboxId not found")
 
             const code = event.object.code
-            const sbdxId = event.object.sandboxId
             const structuredFiles = convertFilesToTree(code)
             globalStore.fileTree = structuredFiles
-            globalStore.sbxId = sbdxId
-            setSbxId(sbdxId)
+            setWebsiteGenerationCompleted(true)
+        },
+
+        onError() {
+            globalStore.isPreviewLoading = false
+
+            pushMessage({
+                id: crypto.randomUUID(),
+                role: "assistant",
+                parts: [
+                    {
+                        text: `⚠️ Website generation failed. Please try again.`,
+                        type: "text",
+                    },
+                ],
+            })
         },
     })
 
     useQuery({
         queryKey: ["get_status"],
         refetchOnMount: false,
-        enabled: !!sbxId,
+        enabled: websiteGenerationCompleted,
         refetchOnWindowFocus: false,
         staleTime: Infinity,
         refetchInterval: ({ state }) => {
             const data = state.data
             if (!data) return false
             if (data.status === "progress") return 5000
-            if (data.status === "completed") {
-                globalStore.isPreviewLoading = false
-                globalStore.server_url = data.server_url
-            }
+            if (data.status === "completed") globalStore.isPreviewLoading = false
             return false
         },
         queryFn: async () => {
@@ -75,28 +85,50 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
                 return null
             }
 
-            const { success, data } = await sandbox.getCreationStatus(sbxId)
+            const response = await sandbox.getCreationStatus(sbxId, initial_prompt)
 
-            if (!success) {
+            if (!response || !response.data) {
                 console.error("Failed to get status")
                 return null
             }
 
-            globalStore.isPreviewLoading = false
-            globalStore.server_url = data.server_url
-            return data
+            globalStore.server_url = response.data.server_url
+            return response.data
         },
     })
 
-    const { sendMessage } = useChat({
+    const { sendMessage, setMessages } = useChat({
         transport: new DefaultChatTransport({
-            api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/init`,
+            api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-plan`,
         }),
 
-        onFinish: () => {
+        onFinish: ({ isError }) => {
+            if (isError) {
+                return
+            }
+
             console.log("chat streaing finished")
             submit({ prompt: initial_prompt })
             globalStore.isPreviewLoading = true
+        },
+
+        onError() {
+            console.log("pushing message...")
+            globalStore.isPreviewLoading = false
+
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: crypto.randomUUID(),
+                    role: "assistant",
+                    parts: [
+                        {
+                            text: `⚠️ Website plan generation failed. Please try again.`,
+                            type: "text",
+                        },
+                    ],
+                },
+            ])
         },
     })
 
@@ -123,8 +155,8 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
 
     useEffect(() => {
         if (!initial_prompt || hasMessageSend.current) return
-        hasMessageSend.current = true
         sendMessage({ text: initial_prompt })
+        hasMessageSend.current = true
         globalStore.isPreviewLoading = true
     }, [initial_prompt])
 

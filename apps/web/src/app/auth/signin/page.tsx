@@ -35,7 +35,7 @@ export default function SignInPage() {
             return response.data
         },
         onSuccess() {
-            redirect("/")
+            window.location.href = "/"
         },
     })
 

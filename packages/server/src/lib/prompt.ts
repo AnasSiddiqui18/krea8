@@ -54,12 +54,7 @@ export const projectTemplateSchema = z.object({
     }),
 })
 
-export const generateWebsitePrompt = (
-    userPrompt: string,
-    port: string,
-    initialTemplate: Record<string, string>,
-    sbxId: string,
-) => `
+export const generateWebsitePrompt = (userPrompt: string, port: string, initialTemplate: Record<string, string>) => `
 You are a professional code generator AI. Your task is to generate or update files for a Next.js 15.1.3 project using the following starter template:
 
 
@@ -82,11 +77,6 @@ my-next-app/
 
 **User requirements:**  
 "${userPrompt}"
-
-
-sbxId
-
-${sbxId}
 
 
 --- IMPORTANT: Create separate, reusable components where applicable.  
@@ -581,3 +571,27 @@ export const updateWebsitePrompt = (structure: Record<string, string>, userPromp
 
   Now, consider the project structure and the user's request, and output the updated or newly created files exactly as they should exist in the project.
 `
+
+export const generateSummary = (prompt: string) =>
+    `You are generating a concise project summary.
+
+Task:
+- Write exactly ONE short sentence.
+- Describe what is being built.
+- Use neutral, factual language.
+- Do NOT add marketing adjectives (e.g. "amazing", "modern", "beautiful").
+- Do NOT mention technologies unless explicitly stated in the prompt.
+- Do NOT add extra assumptions.
+- Do NOT use quotes or emojis.
+
+User prompt:
+"${prompt}"
+
+Examples:
+Input: "Generate a landing page for a clothing brand based in the UK"
+Output: A landing page for a UK-based clothing brand.
+
+Input: "Create a personal portfolio website for a frontend developer"
+Output: A personal portfolio website for a frontend developer.
+
+Now generate the summary.`.trim()

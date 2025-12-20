@@ -1,19 +1,33 @@
 import { Hono } from "hono"
 import { getFile, updateFile } from "@/helpers/helpers"
 import { activeContainers } from "@/shared"
+import { generateText } from "ai"
+import { model } from "@/lib/ai/google"
+import { db } from "@/db/db"
+import { project } from "@/db/schema/project.schema"
+import { eq } from "drizzle-orm"
+import { generateSummary } from "@/lib/prompt"
 
 export const sandboxRouter = new Hono()
 
 sandboxRouter.get("/status/:sbxId", async (c) => {
     try {
         const { sbxId } = c.req.param()
-
+        const prompt = await c.req.query("prompt")
         const containerInfo = activeContainers.get(sbxId)
 
         if (!containerInfo) {
             return c.json({
                 status: "failed",
                 message: "Sandbox not found",
+                server_url: null,
+            })
+        }
+
+        if (!prompt) {
+            return c.json({
+                status: "failed",
+                message: "Prompt not found",
                 server_url: null,
             })
         }
@@ -35,7 +49,23 @@ sandboxRouter.get("/status/:sbxId", async (c) => {
             })
         }
 
-        // TODO only update the isServerReady when the server is fully ready
+        // this will run only once, updating the db + returning complete status to the frontend
+
+        const summary = await generateText({
+            model,
+            prompt: generateSummary(prompt),
+        })
+
+        const updatedProject = await db
+            .update(project)
+            .set({ summary: summary.text })
+            .where(eq(project.id, sbxId))
+            .returning()
+
+        const updatedSummary = updatedProject.at(0)?.summary
+
+        if (updatedSummary && updatedSummary !== summary.text)
+            return c.json({ status: "failed", server_url: null, message: "failed to update summary in DB" })
 
         return c.json({
             status: "completed",
@@ -43,7 +73,7 @@ sandboxRouter.get("/status/:sbxId", async (c) => {
             message: "server started successfully",
         })
     } catch (error) {
-        console.error("Failed to spin sandbox")
+        console.error("Failed to spin sandbox", error)
         return c.json({
             status: "failed",
             message: "Failed to spin sandbox",

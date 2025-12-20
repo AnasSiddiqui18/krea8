@@ -26,9 +26,14 @@ export const sandbox = {
         }
     },
 
-    getCreationStatus: async (sbxId: string) => {
+    getCreationStatus: async (sbxId: string, prompt: string | null) => {
         try {
-            const status = await axios.get(`/sandbox/status/${sbxId}`)
+            if (!prompt) {
+                console.error("aborting req... prompt not found")
+                return null
+            }
+
+            const status = await axios.get(`/sandbox/status/${sbxId}?prompt=${prompt}`)
 
             const parsed = getSandboxCreationStatusSchema.safeParse(status.data)
 

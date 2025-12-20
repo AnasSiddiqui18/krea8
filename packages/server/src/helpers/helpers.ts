@@ -1,7 +1,7 @@
 import fs from "fs"
 import path from "path"
 import { getPort } from "get-port-please"
-import { NextTemplate } from "data"
+import { NextTemplate } from "@/data"
 
 const getFoldersPath = (filePath: string) => {
     const segments = filePath.split("/").filter(Boolean)

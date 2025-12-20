@@ -1,5 +1,4 @@
 import type { TreeNode } from "@/components/builder/tree-view-component"
-import { useChatStore } from "@ai-sdk-tools/store"
 import { proxy } from "valtio"
 import { devtools } from "valtio/utils"
 

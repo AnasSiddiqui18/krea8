@@ -8,14 +8,13 @@ import { useSnapshot } from "@/hooks/use-snapshot"
 import { globalStore } from "@/store/global.store"
 
 // Types
-export type TreeNode = {
-    id: string
-    label: string
-    icon?: React.ReactNode
-    children?: TreeNode[]
-    data?: any
-    type: "file" | "dir"
-}
+
+type TreeNodeBase = { id: string; label: string; icon?: React.ReactNode; data?: any }
+
+type FileNode = TreeNodeBase & { type: "file"; children?: undefined }
+type DirNode = TreeNodeBase & { type: "dir"; children: TreeNode[] }
+
+export type TreeNode = FileNode | DirNode
 
 export type TreeViewProps = {
     data: TreeNode[]

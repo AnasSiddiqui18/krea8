@@ -32,10 +32,10 @@ export function FilePathSelector({ label, siblings, handleSelectFile, showSepara
                     <DropdownMenuSubContent>
                         {children.map((child) => {
                             if (child.type === "dir") {
-                                return (
-                                    <RenderDir label={child.label} children={child.children ?? []} key={child.label} />
-                                )
+                                return <RenderDir label={child.label} children={child.children} key={child.label} />
                             }
+
+                            child.children
 
                             return (
                                 <DropdownMenuItem key={child.label} onClick={() => handleSelectFile(child)}>
@@ -69,7 +69,7 @@ export function FilePathSelector({ label, siblings, handleSelectFile, showSepara
                                 )
                             }
 
-                            return <RenderDir label={sib.label} children={sib.children ?? []} key={sib.label} />
+                            return <RenderDir label={sib.label} children={sib.children} key={sib.label} />
                         })}
                     </DropdownMenuContent>
                 </DropdownMenu>

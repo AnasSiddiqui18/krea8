@@ -1,5 +1,3 @@
-import type { TreeNode } from "@/components/builder/tree-view-component"
-
 export const sampleConversation = [
     {
         role: "user",
@@ -244,57 +242,6 @@ export default config;
     },
 }
 
-export const mockFileTree: TreeNode[] = [
-    {
-        id: "src",
-        label: "src",
-        type: "dir",
-        children: [
-            {
-                id: "app",
-                label: "app",
-                type: "dir",
-                children: [
-                    {
-                        id: "layout.tsx",
-                        label: "layout.tsx",
-                        type: "file",
-                        children: [],
-                    },
-
-                    {
-                        id: "page.tsx",
-                        label: "page.tsx",
-                        type: "file",
-                        children: [],
-                    },
-                    {
-                        id: "globals.css",
-                        label: "globals.css",
-                        type: "file",
-                        children: [],
-                    },
-                ],
-            },
-        ],
-    },
-
-    {
-        id: "packge.json",
-        label: "packge.json",
-        type: "file",
-        children: [],
-    },
-
-    {
-        id: "tailwind.config.ts",
-        label: "tailwind.config.ts",
-        type: "file",
-
-        children: [],
-    },
-]
-
 export const filesEx = [
     // Code files
     ".ts",
@@ -379,14 +326,4 @@ export const filesEx = [
     ".sh",
     ".bat",
     ".ps1",
-]
-
-export const projectFiles = [
-    { file_path: "src/app/page.tsx" },
-    { file_path: "src/app/layout.tsx" },
-    { file_path: "src/app/globals.css" },
-    { file_path: "tailwind.config.mjs" },
-    { file_path: "tsconfig.json" },
-    { file_path: "package.json" },
-    { file_path: "postcss.config.mjs" },
 ]

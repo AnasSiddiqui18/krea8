@@ -23,7 +23,7 @@ export function convertFilesToTree(files: any[]) {
                 const fileNode = {
                     id: crypto.randomUUID(),
                     label: segment,
-                    type: "file" as "dir" | "file",
+                    type: "file" as "file",
                     path: currentPath,
                 }
                 currentLevel.push(fileNode)
@@ -33,7 +33,7 @@ export function convertFilesToTree(files: any[]) {
             const directoryNode = {
                 id: crypto.randomUUID(),
                 label: segment,
-                type: "dir" as "dir" | "file",
+                type: "dir" as "dir",
                 path: currentPath,
                 children: [],
             }

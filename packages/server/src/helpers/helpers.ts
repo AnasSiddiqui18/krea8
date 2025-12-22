@@ -10,6 +10,10 @@ const getFoldersPath = (filePath: string) => {
 
 const getSbxRoot = (sbxId: string) => `./sandboxes/sandbox-${sbxId}`
 
+const extractFilePath = (content: string) => content.match(/path="([^"]+)"/)?.[1]
+
+const extractCodeContent = (content: string) => content.match(/<krea8file[^>]*>([\s\S]*?)<\/krea8file>/)?.[1]
+
 export async function createFolderTree(sbxId: string, files: Record<string, string>) {
     try {
         const sandboxRoot = getSbxRoot(sbxId)
@@ -66,18 +70,20 @@ export async function updateFile(filePath: string, updatedContent: string, sbxId
     }
 }
 
-export async function updateOrCreateFiles(
-    updatedFiles: { action: string; path: string; updatedContent: string }[],
-    sbxId: string,
-) {
+export async function updateOrCreateFiles(updatedFiles: { rawFileBlock: string }[], sbxId: string) {
     try {
         const rootPath = getSbxRoot(sbxId)
 
-        updatedFiles.forEach((file) => {
-            console.log(file.action, file.path)
-            const regex = /<coderocketFile[^>]*>([\s\S]*?)<\/coderocketFile>/
-            const match = file.updatedContent.match(regex)
-            fs.writeFileSync(`${path.join(rootPath, file.path)}`, match?.[1]!)
+        updatedFiles.forEach(({ rawFileBlock }) => {
+            const filePath = extractFilePath(rawFileBlock)
+
+            if (!filePath) {
+                console.error("failed to extract filePath")
+                return null
+            }
+
+            const code = extractCodeContent(rawFileBlock)
+            if (code) fs.writeFileSync(`${path.join(rootPath, filePath)}`, code)
         })
     } catch (error) {
         console.log("update or create failed")
@@ -110,25 +116,22 @@ export function getProjectStructure(sbxId: string) {
     return object
 }
 
-export function extractCodeContent(code: Record<string, string>[]) {
+export function updateCodeOnTopOfTemplate(code: { rawFileBlock: string }[]) {
     const object = { ...NextTemplate }
 
     code.forEach((c) => {
-        const { file_content, file_path } = c
+        const { rawFileBlock } = c
 
-        if (!file_content || !file_path) {
-            console.error("file path or content not found")
+        const filePath = extractFilePath(rawFileBlock)
+
+        if (!filePath) {
+            console.error("failed to extract filePath")
             return null
         }
 
-        const regex = /<coderocketFile[^>]*>([\s\S]*?)<\/coderocketFile>/
-        const match = file_content.match(regex)
+        const code = extractCodeContent(rawFileBlock)
 
-        if (match && match[1]) {
-            object[file_path] = match[1]
-        } else {
-            console.error(`failed to get content for path`, file_path, file_content)
-        }
+        if (code) object[filePath] = code
     })
 
     return object

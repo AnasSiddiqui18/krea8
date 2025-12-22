@@ -77,7 +77,7 @@ export function MessageBox({ content, role }: any) {
     }
 
     const components = {
-        "krea8-file-action": ({ action, path, name }: { action: string; path: string; name: string }) => (
+        "krea8file": ({ action, path, name }: { action: string; path: string; name: string }) => (
             <FileEvent action={action} path={path} name={name} />
         ),
     } as Record<string, any>

@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import z from "zod"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
 import { promptSchema, websiteUpdateSchema } from "@/schema/schema"
-import { isValidPath } from "@/shared/shared"
+import { emitFileChangeStatusMessage } from "@/shared/shared"
 import { useSnapshot } from "@/hooks/use-snapshot"
 import { globalStore } from "@/store/global.store"
 
@@ -64,25 +64,7 @@ export function ChatInterface() {
     })
 
     useEffect(() => {
-        if (object && object.code) {
-            const currentFile = object.code.at(-1)
-            const currentPath = currentFile?.path
-            const currentAction = currentFile?.action
-            const isPathValid = isValidPath(currentPath)
-            const fileName = currentFile?.path?.split("/").at(-1)
-
-            if (currentPath && isPathValid && currentAction && !processedPaths.current.has(currentPath)) {
-                const content = `<krea8-file-action name=${fileName} action='${currentFile.action}' path='${currentFile.path}'></krea8-file-action>`
-
-                processedPaths.current.set(currentPath, currentAction)
-
-                pushMessage({
-                    id: crypto.randomUUID(),
-                    role: "assistant",
-                    parts: [{ text: content, type: "text" }],
-                })
-            }
-        }
+        if (object && object.fileBlocks) emitFileChangeStatusMessage(object, processedPaths, pushMessage)
     }, [object])
 
     useEffect(() => {

@@ -5,10 +5,10 @@ import { ChatInterface } from "@/components/builder/chat-interface"
 import { AppPreview } from "@/components/builder/app-preview"
 import { useSnapshot } from "@/hooks/use-snapshot"
 import { globalStore } from "@/store/global.store"
-import { useChat, useChatStore, useChatMessages } from "@ai-sdk-tools/store"
+import { useChat, useChatStore } from "@ai-sdk-tools/store"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
 import { fragmentSchema } from "@/schema/schema"
-import { convertFilesToTree, isValidPath } from "@/shared/shared"
+import { convertFilesToTree, emitFileChangeStatusMessage, updateCodeOnTopOfTemplate } from "@/shared/shared"
 import { DefaultChatTransport } from "ai"
 import { useQuery } from "@tanstack/react-query"
 import { sandbox } from "@/queries/sandbox.queries"
@@ -41,11 +41,11 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
                 })
             }
 
-            if (!event?.object?.code) return console.error("code not found")
             if (!event?.object?.sandboxId) return console.error("sandboxId not found")
 
-            const code = event.object.code
-            const structuredFiles = convertFilesToTree(code)
+            const object = updateCodeOnTopOfTemplate(event.object.fileBlocks)
+
+            const structuredFiles = convertFilesToTree(object)
             globalStore.fileTree = structuredFiles
             setWebsiteGenerationCompleted(true)
         },
@@ -133,24 +133,7 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
     })
 
     useEffect(() => {
-        if (object && object.code) {
-            const currentFile = object.code.at(-1)
-            const currentPath = currentFile?.file_path
-            const currentAction = currentFile?.action
-            const isPathValid = isValidPath(currentPath)
-
-            if (currentPath && isPathValid && currentAction && !processedPaths.current.has(currentPath)) {
-                const content = `<krea8-file-action name=${currentFile.file_name} action='${currentFile.action}' path='${currentFile.file_path}'></krea8-file-action>`
-
-                processedPaths.current.set(currentPath, currentAction)
-
-                pushMessage({
-                    id: crypto.randomUUID(),
-                    role: "assistant",
-                    parts: [{ text: content, type: "text" }],
-                })
-            }
-        }
+        if (object && object.fileBlocks) emitFileChangeStatusMessage(object, processedPaths, pushMessage)
     }, [object])
 
     useEffect(() => {

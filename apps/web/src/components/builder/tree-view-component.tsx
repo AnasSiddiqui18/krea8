@@ -12,7 +12,7 @@ import { globalStore } from "@/store/global.store"
 type TreeNodeBase = { id: string; label: string; icon?: React.ReactNode; data?: any }
 
 type FileNode = TreeNodeBase & { type: "file"; children?: undefined }
-type DirNode = TreeNodeBase & { type: "dir"; children: TreeNode[] }
+export type DirNode = TreeNodeBase & { type: "dir"; children: TreeNode[] }
 
 export type TreeNode = FileNode | DirNode
 

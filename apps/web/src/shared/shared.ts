@@ -1,17 +1,19 @@
-import type { TreeNode } from "@/components/builder/tree-view-component"
-import { filesEx } from "@/data/data"
+import type { DirNode, TreeNode } from "@/components/builder/tree-view-component"
+import { NextTemplate } from "@/templates/next-template"
+import type { UIDataTypes, UIMessage, UITools } from "ai"
+import type { RefObject } from "react"
 
 export type fileTreeStructure = TreeNode & { path?: string }
 
 export const trimPath = (path: string) => path.split("/").filter((e) => e.trim())
 
+const extractCodeContent = (content: string) => content.match(/<krea8file[^>]*>([\s\S]*?)<\/krea8file>/)?.[1]
+
 let fileSystemTree: fileTreeStructure[] = []
 
-export function convertFilesToTree(files: any[]) {
-    files.forEach((file) => {
-        const { file_path } = file as Record<string, string>
-
-        const pathSegments = file_path!.split("/").filter((segment) => segment.trim())
+export function convertFilesToTree(files: Record<string, string>) {
+    for (const [path] of Object.entries(files)) {
+        const pathSegments = path.split("/").filter((segment) => segment.trim())
 
         let currentLevel = fileSystemTree
         let currentPath = ""
@@ -38,12 +40,13 @@ export function convertFilesToTree(files: any[]) {
                 children: [],
             }
 
-            const existingNode = currentLevel.find((child) => child.label === directoryNode.label)
+            const existingNode = currentLevel.find((child): child is DirNode => child.label === directoryNode.label)
 
             if (!existingNode) currentLevel.push(directoryNode)
-            currentLevel = existingNode?.children ?? directoryNode.children
+
+            currentLevel = existingNode ? existingNode.children : directoryNode.children
         })
-    })
+    }
 
     return fileSystemTree
 }
@@ -121,4 +124,57 @@ export function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
     return result
 }
 
-export const isValidPath = (path: string | undefined) => (path ? filesEx.some((p) => path.includes(p)) : false)
+export const extractFilePath = (content: string) => content.match(/path="([^"]+)"/)?.[1]
+
+export function emitFileChangeStatusMessage(
+    object: any,
+    processedPaths: RefObject<Map<string, string>>,
+    pushMessage: (message: UIMessage<unknown, UIDataTypes, UITools>) => void,
+) {
+    const content = object.fileBlocks.at(-1)
+    if (!content?.rawFileBlock) return
+
+    const fileBlock = content.rawFileBlock
+
+    const isValidTag = /<krea8file\b[^>]*\bpath\s*=\s*"[^"]+"[^>]*>/.test(fileBlock)
+
+    if (!isValidTag) return
+
+    const filePath = extractFilePath(fileBlock)
+
+    if (!filePath) return console.error("failed to extract file path")
+
+    if (!processedPaths.current.has(filePath)) {
+        const splittedTag = fileBlock.match(/^<krea8file\b[^>]*>/)?.[0]
+        if (!splittedTag) return console.error(`Failed to split fileBlock ${fileBlock}`)
+
+        processedPaths.current.set(filePath, fileBlock)
+
+        pushMessage({
+            id: crypto.randomUUID(),
+            role: "assistant",
+            parts: [{ text: splittedTag, type: "text" }],
+        })
+    }
+}
+
+export function updateCodeOnTopOfTemplate(code: { rawFileBlock: string }[]) {
+    const object = { ...NextTemplate }
+
+    code.forEach((c) => {
+        const { rawFileBlock } = c
+
+        const filePath = extractFilePath(rawFileBlock)
+
+        if (!filePath) {
+            console.error("failed to extract filePath")
+            return null
+        }
+
+        const code = extractCodeContent(rawFileBlock)
+
+        if (code) object[filePath] = code
+    })
+
+    return object
+}

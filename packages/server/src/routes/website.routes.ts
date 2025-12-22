@@ -6,9 +6,9 @@ import { fragmentSchema, websiteUpdateSchema } from "@/lib/schema/schema"
 import { Hono } from "hono"
 import {
     createFolderTree,
-    extractCodeContent,
     getAvailablePort,
     getProjectStructure,
+    updateCodeOnTopOfTemplate,
     updateOrCreateFiles,
 } from "@/helpers/helpers"
 import { NextTemplate } from "@/data"
@@ -109,16 +109,17 @@ websiteRouter.post("/create-website/:sbxId", async (c) => {
             })
         }
 
+        console.log("🔌🔌🔌 available port 🔌🔌🔌", port.data)
+
         const stream = streamObject({
             model,
             schema: fragmentSchema,
-            prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate),
+            prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate, sbxId),
             onFinish: async (data) => {
-                const code = data.object?.code
-
+                const code = data.object?.fileBlocks
                 if (!code) return console.log("code not found")
 
-                const object = extractCodeContent(code)
+                const object = updateCodeOnTopOfTemplate(code)
 
                 createFolderTree(sbxId, object)
                 sandbox.getOrPullImage("node:25-alpine3.21", sbxId)
@@ -150,7 +151,7 @@ websiteRouter.patch("/update-website/:sbxId", async (c) => {
             },
             onFinish: (updatedContent) => {
                 if (!updatedContent.object) return console.log("updated content is undefined")
-                updateOrCreateFiles(updatedContent.object.code, sbxId)
+                updateOrCreateFiles(updatedContent.object.fileBlocks, sbxId)
             },
         })
 

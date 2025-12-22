@@ -8,21 +8,67 @@ export const fragmentSchema = z.object({
         .describe(
             "A unique sandbox identifier generated at the start of the website creation process. The client must store this value to track the sandbox state and interact with its runtime environment.",
         ),
-    code: z.array(
+
+    fileBlocks: z.array(
         z.object({
-            action: z.enum(["creating", "updating"]).describe(`
-        Specifies the type of file operation being performed.
-        
-        - **"creating"** → A new file is being added to the project (e.g., \`src/components/Button.tsx\` if it didn't exist before).
-        - **"updating"** → An existing file in the project is being modified or overwritten (e.g., \`src/app/page.tsx\` if it already exists).
-        
-        This field helps distinguish between files that are newly generated and those that are modified as part of an update process.
-          `),
-            file_name: z.string().describe("Name of the file."),
-            file_path: z.string().describe("Relative path to the file, including the file name."),
-            file_content: z
-                .string()
-                .describe("actual code content of the corresponding file, wrapped in a coderocketFile tag"),
+            rawFileBlock: z.string().describe(
+                `Actual code content of the corresponding file, wrapped in a <krea8file> tag.
+
+        The <krea8file> tag MUST include:
+        - path: full file path
+        - name: name of the file
+        - action: either "creating" or "updating"
+
+        The content inside the tag MUST be the full file content.
+
+        Examples:
+
+        1) Creating a new component file:
+
+        <krea8file path="src/components/Button.tsx" action="creating" name="Button.tsx">
+        import React from "react";
+
+        type ButtonProps = {
+          label: string;
+          onClick?: () => void;
+        };
+
+        export const Button = ({ label, onClick }: ButtonProps) => {
+          return (
+            <button onClick={onClick}>
+              {label}
+            </button>
+          );
+        };
+        </krea8file>
+
+        2) Updating an existing file:
+
+        <krea8file path="src/components/Button.tsx" action="updating">
+        import React from "react";
+
+        type ButtonProps = {
+          label: string;
+          onClick?: () => void;
+          disabled?: boolean;
+        };
+
+        export const Button = ({ label, onClick, disabled }: ButtonProps) => {
+          return (
+            <button onClick={onClick} disabled={disabled}>
+              {label}
+            </button>
+          );
+        };
+        </krea8file>
+
+        Rules:
+        - Always wrap code inside a single <krea8file> tag
+        - Do not include explanations outside the tag
+        - Use action="creating" only if the file does not exist
+        - Use action="updating" only if the file already exists
+        `,
+            ),
         }),
     ),
     completion_message: z.string().describe(`
@@ -43,16 +89,53 @@ export const fragmentSchema = z.object({
 })
 
 export const websiteUpdateSchema = z.object({
-    code: z
+    fileBlocks: z
         .array(
             z.object({
-                action: z.literal(["update", "create", "delete"]).describe("Action: create, update, or delete"),
-                path: z.string().describe("File path"),
-                updatedContent: z
-                    .string()
-                    .describe(
-                        "The final runnable code of the file, wrapped in <coderocketFile>...</coderocketFile> tags",
-                    ),
+                rawFileBlock: z.string().describe(
+                    `
+Actual code content of an EXISTING file, wrapped in a <krea8file> tag.
+
+This schema is used ONLY for updating an already existing website.
+The LLM MUST NOT create new files.
+
+The <krea8file> tag MUST include:
+- path: full file path of an EXISTING file
+- name: name of the file
+- action: MUST be "updating" (creation is NOT allowed)
+
+The content inside the tag MUST be the FULL updated file content
+(not a diff, not a patch, not a partial snippet).
+
+Example:
+
+<krea8file path="src/components/Button.tsx" action="updating" name="Button.tsx">
+import React from "react";
+
+type ButtonProps = {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
+export const Button = ({ label, onClick, disabled }: ButtonProps) => {
+  return (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  );
+};
+</krea8file>
+
+Rules:
+- Only EXISTING files may be referenced
+- action MUST always be "updating"
+- Do NOT use action="creating"
+- Do NOT introduce new file paths
+- Always wrap the full updated code in a single <krea8file> tag
+- Do not include explanations or text outside the tag
+`,
+                ),
             }),
         )
         .describe("An array containing multiple files on which actions need to be performed"),

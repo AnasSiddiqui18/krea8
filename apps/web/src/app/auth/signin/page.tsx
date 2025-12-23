@@ -11,7 +11,6 @@ import { AlertCircleIcon, Loader2Icon } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert"
 import { authClient } from "@/lib/auth-client"
 import { signInValidation } from "@/schema/auth"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 
 export default function SignInPage() {
@@ -31,7 +30,7 @@ export default function SignInPage() {
         mutationKey: ["signin_user"],
         mutationFn: async (e: z.output<typeof signInValidation>) => {
             const response = await authClient.signIn.email({ ...e })
-            if (response.error) return console.error("Sigin failed", response.error)
+            if (response.error) throw new Error(response.error.message)
             return response.data
         },
         onSuccess() {

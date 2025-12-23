@@ -35,7 +35,7 @@ export default function SignUpPage() {
             return response.data
         },
         onSuccess() {
-            window.location.href = "/"
+            window.location.href = "/auth/signin"
         },
     })
 

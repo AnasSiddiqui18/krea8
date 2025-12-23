@@ -2,8 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { TanstackQueryProvider } from "@/providers/tanstack-provider"
 import { HeroProvider } from "@/providers/hero-ui-provider"
-import { SidebarProvider, SidebarTrigger } from "@repo/ui/components/sidebar"
-import { AppSidebar } from "@/components/landing/app-sidebar"
+import { SidebarWrapper } from "@/components/landing/sidebar-wrapper"
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -30,7 +29,9 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${geistSans.className} ${geistMono.variable} bg-background light`}>
                 <TanstackQueryProvider>
-                    <HeroProvider>{children}</HeroProvider>
+                    <HeroProvider>
+                        <SidebarWrapper>{children}</SidebarWrapper>
+                    </HeroProvider>
                 </TanstackQueryProvider>
             </body>
         </html>

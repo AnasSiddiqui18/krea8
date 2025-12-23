@@ -16,6 +16,7 @@ import { cn } from "@repo/ui/lib/utils"
 import { Folder, Home } from "lucide-react"
 import { redirect, usePathname, useRouter } from "next/navigation"
 import { ProfileDropdown } from "../shared/profile-dropdown"
+import { Skeleton } from "@repo/ui/components/skeleton"
 
 const sidebarItems = [
     {
@@ -26,9 +27,22 @@ const sidebarItems = [
     {
         name: "Projects",
         icon: Folder,
-        url: "/projects",
+        url: "/dashboard/projects",
     },
 ]
+
+function LinksSkeleton() {
+    return (
+        <div className="space-y-3">
+            {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-md px-2 py-1">
+                    <Skeleton className="h-5 w-5 rounded-md bg-primary/15" />
+                    <Skeleton className={`h-5 bg-primary/10 ${i % 2 === 0 ? "w-[160px]" : "w-[120px]"}`} />
+                </div>
+            ))}
+        </div>
+    )
+}
 
 export function AppSidebar() {
     const pathName = usePathname()
@@ -45,7 +59,7 @@ export function AppSidebar() {
         <Sidebar>
             <SidebarHeader className="px-3 py-4 font-bold text-2xl text-primary cursor-pointer">Krea8 🚀</SidebarHeader>
 
-            <SidebarContent className="px-2">
+            <SidebarContent className="px-1">
                 {!session.isPending && session.data?.user ? (
                     <SidebarMenu>
                         {sidebarItems.map((item) => {
@@ -72,11 +86,11 @@ export function AppSidebar() {
                         })}
                     </SidebarMenu>
                 ) : session.isPending ? (
-                    <Spinner size="sm" />
+                    <LinksSkeleton />
                 ) : null}
             </SidebarContent>
 
-            <SidebarFooter className="border-t px-3 py-3">
+            <SidebarFooter className="border-t px-3 py-3">  
                 {!session.data && !session.isPending ? (
                     <div className="flex flex-col gap-2">
                         <Button variant="outline" className="w-full" onClick={() => redirect("/auth/signin")}>

@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { TanstackQueryProvider } from "@/providers/tanstack-provider"
 import { HeroProvider } from "@/providers/hero-ui-provider"
+import { SidebarProvider, SidebarTrigger } from "@repo/ui/components/sidebar"
+import { AppSidebar } from "@/components/landing/app-sidebar"
 
 const geistSans = Geist({
     variable: "--font-geist-sans",

@@ -90,7 +90,7 @@ export function AppSidebar() {
                 ) : null}
             </SidebarContent>
 
-            <SidebarFooter className="border-t px-3 py-3">  
+            <SidebarFooter className="border-t px-3 py-3">
                 {!session.data && !session.isPending ? (
                     <div className="flex flex-col gap-2">
                         <Button variant="outline" className="w-full" onClick={() => redirect("/auth/signin")}>

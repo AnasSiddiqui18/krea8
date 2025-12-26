@@ -1,13 +1,11 @@
 import type { DirNode, TreeNode } from "@/components/builder/tree-view-component"
-import { NextTemplate } from "@/templates/next-template"
+import { extractFilePath } from "@repo/shared/utils/extract-file-path"
 import type { UIDataTypes, UIMessage, UITools } from "ai"
 import type { RefObject } from "react"
 
 export type fileTreeStructure = TreeNode & { path?: string }
 
 export const trimPath = (path: string) => path.split("/").filter((e) => e.trim())
-
-const extractCodeContent = (content: string) => content.match(/<krea8file[^>]*>([\s\S]*?)<\/krea8file>/)?.[1]
 
 let fileSystemTree: fileTreeStructure[] = []
 
@@ -124,8 +122,6 @@ export function getParentFolderIds(filePath: string, rootTree: TreeNode[]) {
     return result
 }
 
-export const extractFilePath = (content: string) => content.match(/path="([^"]+)"/)?.[1]
-
 export function emitFileChangeStatusMessage(
     object: any,
     processedPaths: RefObject<Map<string, string>>,
@@ -156,25 +152,4 @@ export function emitFileChangeStatusMessage(
             parts: [{ text: splittedTag, type: "text" }],
         })
     }
-}
-
-export function updateCodeOnTopOfTemplate(code: { rawFileBlock: string }[]) {
-    const object = { ...NextTemplate }
-
-    code.forEach((c) => {
-        const { rawFileBlock } = c
-
-        const filePath = extractFilePath(rawFileBlock)
-
-        if (!filePath) {
-            console.error("failed to extract filePath")
-            return null
-        }
-
-        const code = extractCodeContent(rawFileBlock)
-
-        if (code) object[filePath] = code
-    })
-
-    return object
 }

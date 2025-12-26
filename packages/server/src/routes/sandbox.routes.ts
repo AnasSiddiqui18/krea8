@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { getFile, updateFile } from "@/helpers/helpers"
+import { generateWebsiteScreenshotAndStoreImage, getFile, updateFile } from "@/helpers/helpers"
 import { activeContainers } from "@/shared"
 import { generateText } from "ai"
 import { model } from "@/lib/ai/google"
@@ -32,7 +32,7 @@ sandboxRouter.get("/status/:sbxId", async (c) => {
             })
         }
 
-        const { errorMessage, hasError, isServerReady } = containerInfo
+        const { errorMessage, hasError, isServerReady, port } = containerInfo
 
         if (hasError)
             return c.json({
@@ -67,16 +67,21 @@ sandboxRouter.get("/status/:sbxId", async (c) => {
         if (updatedSummary && updatedSummary !== summary.text)
             return c.json({ status: "failed", server_url: null, message: "failed to update summary in DB" })
 
+        generateWebsiteScreenshotAndStoreImage(`http://localhost:${port}`, sbxId)
+            .then((data) => console.log("image operation completed", data))
+            .catch((err) => console.error("Failed to capture screenshot", err))
+
         return c.json({
             status: "completed",
             server_url: `http://localhost:${containerInfo.port}`,
             message: "server started successfully",
         })
     } catch (error) {
-        console.error("Failed to spin sandbox", error)
+        console.error("Status block failed!!", error)
+
         return c.json({
             status: "failed",
-            message: "Failed to spin sandbox",
+            message: "Status block failed!!",
             server_url: null,
         })
     }

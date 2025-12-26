@@ -80,7 +80,7 @@ export function ChatInterface() {
 
     async function handleWebsiteUpdate(input: z.infer<typeof promptSchema>) {
         try {
-            const response = submit({ prompt: input.prompt })
+            submit({ prompt: input.prompt })
 
             pushMessage({
                 id: crypto.randomUUID(),
@@ -123,7 +123,15 @@ export function ChatInterface() {
             <Form {...form}>
                 <form
                     className="absolute bottom-6 right-5 left-5 h-36 border border-primary/20 rounded-md"
-                    onSubmit={form.handleSubmit(handleWebsiteUpdate)}
+                    onSubmit={form.handleSubmit(({ prompt }) => {
+                        const response = submit({ prompt: prompt })
+
+                        pushMessage({
+                            id: crypto.randomUUID(),
+                            role: "user",
+                            parts: [{ text: prompt, type: "text" }],
+                        })
+                    })}
                 >
                     <FormField
                         name="prompt"

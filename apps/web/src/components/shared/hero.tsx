@@ -59,7 +59,7 @@ function MainPromptArea() {
         const { prompt } = value
         globalStore.initial_prompt = prompt
 
-        const response = await axios.get("/website/init")
+        const response = await axios.post("/website/init", { prompt })
 
         if ("status" in response.data) {
             const { project_id } = response.data

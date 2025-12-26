@@ -1,0 +1,10 @@
+{
+  "name": "@repo/shared",
+  "module": "index.ts",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    "./utils/*": "./src/utils/*.ts"
+  }
+}

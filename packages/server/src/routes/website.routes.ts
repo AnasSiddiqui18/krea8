@@ -4,63 +4,88 @@ import { model } from "../lib/ai/google"
 import { HTTPException } from "hono/http-exception"
 import { fragmentSchema, websiteUpdateSchema } from "@/lib/schema/schema"
 import { Hono } from "hono"
-import {
-    createFolderTree,
-    getAvailablePort,
-    getProjectStructure,
-    updateCodeOnTopOfTemplate,
-    updateOrCreateFiles,
-} from "@/helpers/helpers"
+import { createFolderTree, getAvailablePort, getProjectStructure, updateOrCreateFiles } from "@/helpers/helpers"
 import { NextTemplate } from "@/data"
 import { Sandbox } from "@/docker/sandbox"
-import { activeContainers } from "@/shared"
-import { project } from "@/db/schema/project.schema"
+import { activeContainers } from "@/shared/index"
+import { project, projectChats } from "@/db/schema/project.schema"
 import { db } from "@/db/db"
 import { auth } from "@/auth/auth"
+import { eq, sql } from "drizzle-orm"
+import { sendError, sendSuccess } from "@repo/shared/utils/response"
+import { overlayCodeOnTopOfTemplate } from "@repo/shared/utils/overlay-code-on-template"
+import type { Chat } from "@/types"
 
 export const websiteRouter = new Hono()
 
-websiteRouter.get("/init", async (c) => {
+async function doesProjectExists(sbxId: string) {
     try {
-        const session = await auth.api.getSession({ headers: c.req.header() })
+        const projectExists = await db.query.project.findFirst({ where: eq(project.id, sbxId) })
+        if (!projectExists) return sendError("Project not found")
+        return sendSuccess("Project found")
+    } catch (error) {
+        return sendError("Failed to fetch project")
+    }
+}
 
-        if (!session) {
-            return c.json({ sucess: false, message: "failed to get session" }, { status: 400 })
+async function updateChatInDB(sbxId: string, chat: Chat | Chat[]) {
+    try {
+        const updatedChat = await db.execute(sql`
+            UPDATE ${projectChats}
+            SET
+                content = content || ${JSON.stringify(chat)}::jsonb,
+                updated_at = now()
+            WHERE ${projectChats.projectId} = ${sbxId}
+            RETURNING *
+        `)
+
+        if (updatedChat.rowCount === 0) {
+            return sendError("Failed to update chat")
         }
 
+        return sendSuccess({ recordId: (updatedChat.rows[0] ?? {}).id })
+    } catch (error) {
+        return sendError("Failed to update chat")
+    }
+}
+
+websiteRouter.post("/init", async (c) => {
+    try {
+        const session = await auth.api.getSession({ headers: c.req.header() })
+        const { prompt } = await c.req.json()
+
+        if (!session) return c.json({ sucess: false, message: "failed to get session" }, { status: 400 })
+
         const sbxId = crypto.randomUUID()
-        const portRes = await getAvailablePort()
 
-        if (!portRes.success) return c.json({ success: false, message: "Failed to get port" })
+        const [projectResponse] = await db.insert(project).values({ id: sbxId, userId: session.user.id }).returning()
 
-        await db.insert(project).values({
-            id: sbxId,
-            url: `http://localhost:${portRes.data}`,
-            userId: session.user.id,
-        })
+        if (!projectResponse) return c.json({ success: false, message: "Failed to init project" })
 
-        activeContainers.set(sbxId, {
-            isServerReady: false,
-            errorMessage: null,
-            port: portRes.data.toString(),
-            hasError: false,
+        await db.insert(projectChats).values({
+            projectId: projectResponse.id,
+            content: [{ content: prompt, role: "user", type: "text" }],
         })
 
         return c.json({ status: "init_successfully", server_url: null, project_id: sbxId })
     } catch (error) {
         console.log("failed to init", error)
-
-        throw new HTTPException(400, { message: "Failed to init website" })
+        return c.json({ success: false, message: "Failed to init project" })
     }
 })
 
-websiteRouter.post("/create-plan", async (c) => {
+websiteRouter.post("/create-plan/:sbxId", async (c) => {
     try {
         const { messages } = await c.req.json()
+        const { sbxId } = c.req.param()
+
+        const projectExists = await doesProjectExists(sbxId)
+
+        if (!projectExists.success) return c.json({ success: false, message: projectExists.message })
 
         const prompt = messages.at(0)?.parts.at(0)?.text
 
-        if (!prompt) throw new HTTPException(400, { message: "Prompt not found" })
+        if (!prompt) c.json({ success: false, message: "Project not found" })
 
         const result = streamText({
             model,
@@ -69,16 +94,25 @@ websiteRouter.post("/create-plan", async (c) => {
                 delayInMs: 30,
                 chunking: "word",
             }),
+            onFinish: async ({ text }) => {
+                const updateResponse = await updateChatInDB(sbxId, { role: "assistant", type: "text", content: text })
+                if (!updateResponse.success) return console.error(updateResponse.message)
+                console.log(`website plan:: ${updateResponse.data}`)
+            },
+
+            onError: ({ error }) => {
+                console.error("Plan creation failed", error)
+            },
         })
 
         return result.toUIMessageStreamResponse({
-            onFinish: ({ isAborted }) => {
-                if (isAborted) {
-                    console.log("stream aborted")
-                } else {
-                    console.log("stream closed normally")
-                }
+            onFinish: ({ isAborted }) =>
+                isAborted ? console.log("stream aborted") : console.log("stream closed normally"),
+
+            onError: (error) => {
+                return `Failed to generate plan ${error}`
             },
+
             consumeSseStream: consumeStream,
         })
     } catch (error) {
@@ -89,37 +123,61 @@ websiteRouter.post("/create-plan", async (c) => {
 websiteRouter.post("/create-website/:sbxId", async (c) => {
     try {
         const { prompt } = await c.req.json()
-        const portRes = await getAvailablePort()
+        const port = await getAvailablePort()
         const { sbxId } = c.req.param()
 
-        if (!portRes.success) {
-            return c.json({ success: false, message: "Failed to get port" })
-        }
+        const projectExists = await doesProjectExists(sbxId)
 
-        const sandbox = new Sandbox(portRes.data.toString(), activeContainers)
+        if (!projectExists.success) return c.json({ success: false, message: projectExists.message })
 
-        if (!prompt) throw new HTTPException(400, { message: "Prompt not found" })
-
-        const port = await getAvailablePort()
-
-        if (!port.success) {
-            return c.json({
-                success: false,
-                message: "Website creation failed!! Failed to get port",
-            })
-        }
+        if (!port.success) return c.json({ success: false, message: "Failed to get port" })
 
         console.log("🔌🔌🔌 available port 🔌🔌🔌", port.data)
+
+        const [updatedProject] = await db
+            .update(project)
+            .set({ url: `http://localhost:${port.data}` })
+            .returning()
+
+        if (!updatedProject || !updatedProject.url)
+            return c.json({ success: false, message: "Website creation failed" })
+
+        const sandbox = new Sandbox(port.data.toString(), activeContainers)
+
+        if (!prompt) return c.json({ success: false, message: "Prompt not found" })
+
+        activeContainers.set(sbxId, {
+            isServerReady: false,
+            errorMessage: null,
+            port: port.data.toString(),
+            hasError: false,
+        })
 
         const stream = streamObject({
             model,
             schema: fragmentSchema,
             prompt: generateWebsitePrompt(prompt, String(port.data), NextTemplate, sbxId),
             onFinish: async (data) => {
-                const code = data.object?.fileBlocks
+                if (!data.object) return console.error("Failed to get data")
+
+                const code = data.object.fileBlocks
                 if (!code) return console.log("code not found")
 
-                const object = updateCodeOnTopOfTemplate(code)
+                const assistantMessages = code.map((block) => ({
+                    role: "assistant" as const,
+                    type: "text" as const,
+                    content: block.rawFileBlock,
+                }))
+
+                const updateResponse = await updateChatInDB(sbxId, [
+                    ...assistantMessages,
+                    { role: "assistant", type: "text", content: data.object.completion_message },
+                ])
+                if (!updateResponse.success) return console.error(updateResponse.message)
+
+                console.log(`website create:: ${updateResponse.data}`)
+
+                const object = overlayCodeOnTopOfTemplate(code)
 
                 createFolderTree(sbxId, object)
                 sandbox.getOrPullImage("node:25-alpine3.21", sbxId)
@@ -138,6 +196,11 @@ websiteRouter.post("/create-website/:sbxId", async (c) => {
 websiteRouter.patch("/update-website/:sbxId", async (c) => {
     try {
         const { sbxId } = c.req.param()
+
+        const projectExists = await doesProjectExists(sbxId)
+
+        if (!projectExists.success) return c.json({ success: false, message: projectExists.message })
+
         const { prompt } = await c.req.json()
 
         const projectFiles = getProjectStructure(sbxId)
@@ -149,9 +212,22 @@ websiteRouter.patch("/update-website/:sbxId", async (c) => {
             onError: (err) => {
                 console.log("failed to update website", err)
             },
-            onFinish: (updatedContent) => {
+            onFinish: async (updatedContent) => {
                 if (!updatedContent.object) return console.log("updated content is undefined")
+
+                const code = updatedContent.object.fileBlocks
+
                 updateOrCreateFiles(updatedContent.object.fileBlocks, sbxId)
+
+                const assistantMessages = code.map((block) => ({
+                    role: "assistant" as const,
+                    type: "text" as const,
+                    content: block.rawFileBlock,
+                }))
+
+                const updateResponse = await updateChatInDB(sbxId, assistantMessages)
+                if (!updateResponse.success) return console.error(updateResponse.message)
+                console.log(`website update:: ${updateResponse.data}`)
             },
         })
 
@@ -160,12 +236,6 @@ websiteRouter.patch("/update-website/:sbxId", async (c) => {
         return stream.toTextStreamResponse()
     } catch (error) {
         console.log("failed to update", error)
-        return c.json(
-            {
-                sucess: false,
-                message: "failed to update file",
-            },
-            { status: 400 },
-        )
+        return c.json({ sucess: false, message: "failed to update file" }, { status: 400 })
     }
 })

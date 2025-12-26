@@ -22,7 +22,7 @@ app.on(["POST", "GET"], "/api/auth/*", async (c) => {
     return await auth.handler(c.req.raw)
 })
 
-app.get("/", (c) => {
+app.get("/", async (c) => {
     return c.json({
         status: "server is working",
     })

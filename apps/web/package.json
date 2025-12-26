@@ -19,6 +19,7 @@
         "@hookform/resolvers": "^5.2.2",
         "@monaco-editor/react": "^4.7.0",
         "@repo/server": "*",
+        "@repo/shared": "*",
         "@repo/ui": "*",
         "@tailwindcss/typography": "^0.5.19",
         "@tanstack/react-query": "^5.90.5",

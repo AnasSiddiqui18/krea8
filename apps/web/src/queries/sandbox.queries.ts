@@ -1,5 +1,5 @@
 import { axios } from "@/lib/axios"
-import { sendError, sendSuccess } from "@/lib/response"
+import { sendError, sendSuccess } from "@repo/shared/utils/response"
 import {
     getFilesFromSandboxSchema,
     getSandboxCreationStatusSchema,

@@ -1,31 +1,12 @@
 import crypto from "crypto"
 import { docker } from "./docker"
+import type { ActiveContainers } from "@/types"
 
 export class Sandbox {
     docker: typeof docker
     port: string
-    activeContainers: Map<
-        string,
-        {
-            isServerReady: boolean
-            hasError: boolean
-            errorMessage: string | null
-            port: string
-        }
-    >
-
-    constructor(
-        port: string,
-        activeContainers: Map<
-            string,
-            {
-                isServerReady: boolean
-                hasError: boolean
-                errorMessage: string | null
-                port: string
-            }
-        >,
-    ) {
+    activeContainers: ActiveContainers
+    constructor(port: string, activeContainers: ActiveContainers) {
         this.docker = docker
         this.port = port
         this.activeContainers = activeContainers

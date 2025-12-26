@@ -8,7 +8,8 @@ import { globalStore } from "@/store/global.store"
 import { useChat, useChatStore } from "@ai-sdk-tools/store"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
 import { fragmentSchema } from "@/schema/schema"
-import { convertFilesToTree, emitFileChangeStatusMessage, updateCodeOnTopOfTemplate } from "@/shared/shared"
+import { convertFilesToTree, emitFileChangeStatusMessage } from "@/shared/shared"
+import { overlayCodeOnTopOfTemplate } from "@repo/shared/utils/overlay-code-on-template"
 import { DefaultChatTransport } from "ai"
 import { useQuery } from "@tanstack/react-query"
 import { sandbox } from "@/queries/sandbox.queries"
@@ -43,7 +44,7 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
 
             if (!event?.object?.sandboxId) return console.error("sandboxId not found")
 
-            const object = updateCodeOnTopOfTemplate(event.object.fileBlocks)
+            const object = overlayCodeOnTopOfTemplate(event.object.fileBlocks)
 
             const structuredFiles = convertFilesToTree(object)
             globalStore.fileTree = structuredFiles
@@ -99,7 +100,7 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
 
     const { sendMessage, setMessages } = useChat({
         transport: new DefaultChatTransport({
-            api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-plan`,
+            api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-plan/${sbxId}`,
         }),
 
         onFinish: ({ isError }) => {
@@ -113,7 +114,6 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
         },
 
         onError() {
-            console.log("pushing message...")
             globalStore.isPreviewLoading = false
 
             setMessages((prev) => [

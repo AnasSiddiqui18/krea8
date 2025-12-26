@@ -6,3 +6,8 @@ import type { NeonHttpDatabase } from "drizzle-orm/neon-http"
 export type TBetterAuth = ReturnType<typeof betterAuth>
 export type db = NeonHttpDatabase<typeof schema> & { $client: NeonQueryFunction<false, false> }
 export type Variables = { db: db; auth: TBetterAuth }
+export type Chat = { role: "user" | "assistant"; type: "text"; content: string }
+export type ActiveContainers = Map<
+    string,
+    { isServerReady: boolean; hasError: boolean; errorMessage: string | null; port: string }
+>

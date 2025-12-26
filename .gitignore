@@ -39,7 +39,7 @@ yarn-error.log*
 
 # ignore todo
 
-todo
+todo.md
 
 
 # ignore db sql schema

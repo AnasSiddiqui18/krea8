@@ -7,7 +7,7 @@ import { sandbox } from "@/queries/sandbox.queries"
 import { getParentFolderIds } from "@/shared/shared"
 import rehypeRaw from "rehype-raw"
 
-export function MessageBox({ content, role }: any) {
+export function MessageBox({ content, role }: { content: string; role: "assistant" | "user" }) {
     const { sbxId, fileTree } = useSnapshot(globalStore)
 
     const FileEvent = ({ action, path, name }: { action: string; path: string; name: string }) => {
@@ -76,11 +76,7 @@ export function MessageBox({ content, role }: any) {
         )
     }
 
-    const components = {
-        krea8file: ({ action, path, name }: { action: string; path: string; name: string }) => (
-            <FileEvent action={action} path={path} name={name} />
-        ),
-    } as Record<string, any>
+    const components = { krea8file: FileEvent } as Record<string, any>
 
     return (
         <div className={cn(role !== "assistant" && "flex justify-end")}>

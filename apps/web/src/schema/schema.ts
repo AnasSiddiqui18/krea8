@@ -173,3 +173,23 @@ export const updateFileInSandboxSchema = z.object({
     success: z.boolean(),
     message: z.string(),
 })
+
+// project schema
+
+export const getProjects = z.union([
+    z.object({ success: z.literal(false), message: z.string() }),
+    z.object({
+        success: z.literal(true),
+        message: z.string(),
+        projects: z.array(
+            z.object({
+                image: z.union([z.string(), z.null()]),
+                summary: z.union([z.string(), z.null()]),
+                id: z.string(),
+                userId: z.string(),
+                createdAt: z.string(),
+                updatedAt: z.string(),
+            }),
+        ),
+    }),
+])

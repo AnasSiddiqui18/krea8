@@ -1,4 +1,5 @@
 import type { DirNode, TreeNode } from "@/components/builder/tree-view-component"
+import { sendSuccess } from "@/lib/response"
 import { extractFilePath } from "@repo/shared/utils/extract-file-path"
 import type { UIDataTypes, UIMessage, UITools } from "ai"
 import type { RefObject } from "react"
@@ -6,6 +7,12 @@ import type { RefObject } from "react"
 export type fileTreeStructure = TreeNode & { path?: string }
 
 export const trimPath = (path: string) => path.split("/").filter((e) => e.trim())
+
+const isCodeContent = (content: string) => {
+    return /<krea8file\b[^>]*\bpath\s*=\s*"[^"]+"[^>]*>/.test(content)
+}
+
+const splitCodeTag = (fileBlock: string) => fileBlock.match(/^<krea8file\b[^>]*>/)?.[0] as string
 
 let fileSystemTree: fileTreeStructure[] = []
 
@@ -132,16 +139,16 @@ export function emitFileChangeStatusMessage(
 
     const fileBlock = content.rawFileBlock
 
-    const isValidTag = /<krea8file\b[^>]*\bpath\s*=\s*"[^"]+"[^>]*>/.test(fileBlock)
+    const isCodeTag = isCodeContent(fileBlock)
 
-    if (!isValidTag) return
+    if (!isCodeTag) return
 
     const filePath = extractFilePath(fileBlock)
 
     if (!filePath) return console.error("failed to extract file path")
 
     if (!processedPaths.current.has(filePath)) {
-        const splittedTag = fileBlock.match(/^<krea8file\b[^>]*>/)?.[0]
+        const splittedTag = splitCodeTag(fileBlock)
         if (!splittedTag) return console.error(`Failed to split fileBlock ${fileBlock}`)
 
         processedPaths.current.set(filePath, fileBlock)
@@ -151,5 +158,30 @@ export function emitFileChangeStatusMessage(
             role: "assistant",
             parts: [{ text: splittedTag, type: "text" }],
         })
+    }
+}
+
+export function pushMessageInChat(
+    chats: { role: "user" | "assistant"; type: "text"; content: string }[],
+    pushMessage: (id: string, messages: UIMessage<unknown, UIDataTypes, UITools>[]) => void,
+) {
+    try {
+        const updatedChat = chats.map((chat) => {
+            const id = crypto.randomUUID()
+            const isCodeTag = isCodeContent(chat.content)
+
+            if (isCodeTag) {
+                const splittedTag = splitCodeTag(chat.content)
+                return { id, role: chat.role, parts: [{ type: chat.type, text: splittedTag }] }
+            }
+
+            return { id, role: chat.role, parts: [{ type: chat.type, text: chat.content }] }
+        })
+
+        pushMessage(crypto.randomUUID(), updatedChat)
+
+        return sendSuccess("Chats pushed")
+    } catch (error) {
+        return sendSuccess("Failed to push chats")
     }
 }

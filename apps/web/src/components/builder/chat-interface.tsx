@@ -9,19 +9,19 @@ import { useEffect, useRef } from "react"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@repo/ui/components/form"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import z from "zod"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
 import { promptSchema, websiteUpdateSchema } from "@/schema/schema"
 import { emitFileChangeStatusMessage } from "@/shared/shared"
 import { useSnapshot } from "@/hooks/use-snapshot"
 import { globalStore } from "@/store/global.store"
+import { Spinner } from "@heroui/react"
 
 export function ChatInterface() {
     const status = useChatStatus()
     const chatElRef = useRef<HTMLDivElement | null>(null)
     const { pushMessage } = useChatStore()
     const messages = useChatMessages()
-    const { sbxId } = useSnapshot(globalStore)
+    const { sbxId, isFetchingChats } = useSnapshot(globalStore)
     const processedPaths = useRef<Map<string, string>>(new Map())
     const hasInitialMessagePushed = useRef(false)
 
@@ -78,20 +78,6 @@ export function ChatInterface() {
         defaultValues: { prompt: "" },
     })
 
-    async function handleWebsiteUpdate(input: z.infer<typeof promptSchema>) {
-        try {
-            submit({ prompt: input.prompt })
-
-            pushMessage({
-                id: crypto.randomUUID(),
-                role: "user",
-                parts: [{ text: input.prompt, type: "text" }],
-            })
-        } catch (error) {
-            console.log("failed to update website")
-        }
-    }
-
     return (
         <div className="h-full w-lg text-secondary relative border-r-2 border-secondary">
             <div className="h-14 p-3 border-b-2 border-secondary">
@@ -101,21 +87,28 @@ export function ChatInterface() {
             </div>
 
             <div className="h-[700px] pretty-scrollbar overflow-y-auto py-5 space-y-3" ref={chatElRef}>
-                {messages.map((msg, idx) => {
-                    return (
-                        <div className="px-2" key={idx}>
-                            {msg.parts.map((part, idx) => {
-                                return part.type === "text" ? (
-                                    <MessageBox
-                                        key={msg.id}
-                                        content={part.text}
-                                        role={msg.role as "assistant" | "user"}
-                                    />
-                                ) : null
-                            })}
-                        </div>
-                    )
-                })}
+                {isFetchingChats ? (
+                    <div className="flex flex-col items-center justify-center gap-2 py-6">
+                        <Spinner size="md" />
+                        <span className="text-sm text-muted-foreground">Fetching chats…</span>
+                    </div>
+                ) : (
+                    messages.map((msg, idx) => {
+                        return (
+                            <div className="px-2" key={idx}>
+                                {msg.parts.map((part, idx) => {
+                                    return part.type === "text" ? (
+                                        <MessageBox
+                                            key={idx}
+                                            content={part.text}
+                                            role={msg.role as "assistant" | "user"}
+                                        />
+                                    ) : null
+                                })}
+                            </div>
+                        )
+                    })
+                )}
 
                 <div className="px-2">{status === "submitted" && <TextShimmer>Thinking...</TextShimmer>}</div>
             </div>

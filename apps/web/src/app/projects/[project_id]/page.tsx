@@ -8,18 +8,57 @@ import { globalStore } from "@/store/global.store"
 import { useChat, useChatStore } from "@ai-sdk-tools/store"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
 import { fragmentSchema } from "@/schema/schema"
-import { convertFilesToTree, emitFileChangeStatusMessage } from "@/shared/shared"
+import { convertFilesToTree, emitFileChangeStatusMessage, pushMessageInChat } from "@/shared/shared"
 import { overlayCodeOnTopOfTemplate } from "@repo/shared/utils/overlay-code-on-template"
 import { DefaultChatTransport } from "ai"
-import { useQuery } from "@tanstack/react-query"
 import { sandbox } from "@/queries/sandbox.queries"
+import { axios } from "@/lib/axios"
+import { useFetch } from "@/hooks/use-fetch"
 
-export default function ChatPage({ params }: { params: Promise<{ chat_id: string }> }) {
+export default function ChatPage({ params }: { params: Promise<{ project_id: string }> }) {
     const { initial_prompt, sbxId } = useSnapshot(globalStore)
     const hasMessageSend = useRef(false)
-    const { pushMessage } = useChatStore()
+    const { pushMessage, setNewChat } = useChatStore()
     const processedPaths = useRef<Map<string, string>>(new Map())
     const [websiteGenerationCompleted, setWebsiteGenerationCompleted] = useState(false)
+    const resolvedParams = React.use(params)
+
+    const { isPending, isError, error } = useFetch({
+        queryKey: ["fetch_chats"],
+        enabled: !!resolvedParams.project_id,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        queryFn: async () => {
+            try {
+                const chats = await axios.get(`/projects/get-chats/${resolvedParams.project_id}`)
+
+                const { data } = chats
+
+                if (!data.success) {
+                    console.error("Failed to fetch projects")
+                    return null
+                }
+
+                const chatResponse = pushMessageInChat(data.chats.content, setNewChat)
+
+                if (!chatResponse.success) {
+                    console.error("Failed to push chats inside AI store")
+                    return null
+                }
+
+                return null
+            } catch (error) {
+                console.error("Failed to fetch projects", error)
+            }
+        },
+    })
+
+    useEffect(() => {
+        if (isPending) globalStore.isFetchingChats = true
+        return () => {
+            globalStore.isFetchingChats = false
+        }
+    }, [isPending])
 
     const { object, submit } = useObject({
         api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website/${sbxId}`,
@@ -67,11 +106,9 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
         },
     })
 
-    useQuery({
+    useFetch({
         queryKey: ["get_status"],
-        refetchOnMount: false,
         enabled: websiteGenerationCompleted,
-        refetchOnWindowFocus: false,
         staleTime: Infinity,
         refetchInterval: ({ state }) => {
             const data = state.data
@@ -142,8 +179,6 @@ export default function ChatPage({ params }: { params: Promise<{ chat_id: string
         hasMessageSend.current = true
         globalStore.isPreviewLoading = true
     }, [initial_prompt])
-
-    const resolvedParams = React.use(params)
 
     return (
         <div className="h-screen bg-background flex">

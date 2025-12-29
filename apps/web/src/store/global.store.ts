@@ -19,6 +19,7 @@ interface Store {
         path: string
     }[]
     server_url: string | null
+    isFetchingChats: boolean
 }
 
 export const globalStore = proxy<Store>({
@@ -27,6 +28,7 @@ export const globalStore = proxy<Store>({
     filesGenerated: [],
     selectedFile: {},
     isPreviewLoading: false,
+    isFetchingChats: false,
     sbxId: null,
     server_url: null,
 })

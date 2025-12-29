@@ -26,6 +26,7 @@
         "ai": "^5.0.108",
         "axios": "^1.13.2",
         "better-auth": "^1.4.6",
+        "date-fns": "^4.1.0",
         "framer-motion": "^12.23.24",
         "lucide-react": "^0.548.0",
         "monaco-editor": "^0.54.0",

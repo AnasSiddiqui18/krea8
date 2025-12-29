@@ -4,6 +4,7 @@ import { websiteRouter } from "./routes/website.routes"
 import { sandboxRouter } from "./routes/sandbox.routes"
 import { auth } from "@/auth/auth"
 import type { Variables } from "./types"
+import { projectRouter } from "./routes/project.routes"
 
 type THono = { Variables: Variables }
 const app = new Hono<THono>()
@@ -30,5 +31,6 @@ app.get("/", async (c) => {
 
 app.route("/website", websiteRouter)
 app.route("/sandbox", sandboxRouter)
+app.route("/projects", projectRouter)
 
 export default { port: 3001, fetch: app.fetch, idleTimeout: 60 }

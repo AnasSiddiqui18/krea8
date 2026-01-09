@@ -1,6 +1,5 @@
 import { Chip } from "@heroui/chip"
 import { formatDistanceToNow } from "date-fns"
-import { redirect } from "next/navigation"
 
 interface Project {
     image: string | null

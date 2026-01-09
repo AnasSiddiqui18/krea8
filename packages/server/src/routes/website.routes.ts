@@ -18,7 +18,7 @@ import type { Chat } from "@/types"
 
 export const websiteRouter = new Hono()
 
-async function doesProjectExists(sbxId: string) {
+export async function doesProjectExists(sbxId: string) {
     try {
         const projectExists = await db.query.project.findFirst({ where: eq(project.id, sbxId) })
         if (!projectExists) return sendError("Project not found")
@@ -67,6 +67,8 @@ websiteRouter.post("/init", async (c) => {
             content: [{ content: prompt, role: "user", type: "text" }],
         })
 
+        // find a way to insert chat id inside projects record
+
         return c.json({ status: "init_successfully", server_url: null, project_id: sbxId })
     } catch (error) {
         console.log("failed to init", error)
@@ -76,16 +78,16 @@ websiteRouter.post("/init", async (c) => {
 
 websiteRouter.post("/create-plan/:sbxId", async (c) => {
     try {
-        const { messages } = await c.req.json()
+        const { prompt } = await c.req.json()
         const { sbxId } = c.req.param()
 
         const projectExists = await doesProjectExists(sbxId)
 
         if (!projectExists.success) return c.json({ success: false, message: projectExists.message })
 
-        const prompt = messages.at(0)?.parts.at(0)?.text
+        // const prompt = messages.at(0)?.parts.at(0)?.text
 
-        if (!prompt) c.json({ success: false, message: "Project not found" })
+        // if (!prompt) c.json({ success: false, message: "Project not found" })
 
         const result = streamText({
             model,

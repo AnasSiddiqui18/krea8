@@ -3,6 +3,7 @@ import { sendError, sendSuccess } from "@repo/shared/utils/response"
 import {
     getFilesFromSandboxSchema,
     getSandboxCreationStatusSchema,
+    projectFilesSchema,
     sandboxCreateSchema,
     updateFileInSandboxSchema,
 } from "@/schema/schema"
@@ -79,6 +80,24 @@ export const sandbox = {
             return sendSuccess(parsed.data)
         } catch (error) {
             console.log(`Failed to update file /sandbox/file/${sbxId}`, error)
+            return sendError("Failed to call /sandbox/file")
+        }
+    },
+
+    getFiles: async (sbxId: string) => {
+        try {
+            const files = await axios.get(`/sandbox/get-files/${sbxId}`)
+            const parsed = projectFilesSchema.safeParse(files.data)
+
+            if (!parsed.success)
+                return (
+                    console.log(z.treeifyError(parsed.error)),
+                    sendError("Invalid response from /sandbox/get-files")
+                )
+
+            return sendSuccess(parsed.data)
+        } catch (error) {
+            console.log(`Failed to call /sandbox/file/${sbxId}`, error)
             return sendError("Failed to call /sandbox/file")
         }
     },

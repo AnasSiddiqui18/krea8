@@ -193,3 +193,26 @@ export const getProjects = z.union([
         ),
     }),
 ])
+
+const chatsContent = z.object({ role: z.enum(["assistant", "user"]), type: z.literal("text"), content: z.string() })
+
+export const getProjectChats = z.union([
+    z.object({ success: z.literal(false), chats: z.null(), message: z.string() }),
+    z.object({
+        success: z.literal(true),
+        message: z.string(),
+        project: z.object({ url: z.string() }),
+        chats: z.object({
+            id: z.string(),
+            createdAt: z.string(),
+            updatedAt: z.string(),
+            content: z.array(chatsContent),
+            projectId: z.string(),
+        }),
+    }),
+])
+
+export const projectFilesSchema = z.object({
+    files: z.record(z.string(), z.string()),
+    message: z.string(),
+})

@@ -2,7 +2,10 @@
 
 const nextConfig = {
     devIndicators: false,
-    typedRoutes: true,
+    experimental:{
+        typedRoutes: true,
+
+    }
 }
 
 export default nextConfig

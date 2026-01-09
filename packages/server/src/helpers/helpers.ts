@@ -190,7 +190,7 @@ export async function uploadImageToStorageAndPersistUrl(projectId: string, local
 
         await axios.put(presignedUrl, fileBuffer, { headers: { "Content-Type": fileType } })
 
-        const cloudfrontUrl = `https://dymlcu2g4m3ry.cloudfront.net/${fileKey}`
+        const cloudfrontUrl = `https://dymlcu2g4m3ry.cloudfront.net/krea8/${fileKey}`
 
         const [updatedProject] = await db
             .update(project)

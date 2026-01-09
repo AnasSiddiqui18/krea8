@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { generateWebsiteScreenshotAndStoreImage, getFile, updateFile } from "@/helpers/helpers"
+import { generateWebsiteScreenshotAndStoreImage, getFile, getProjectStructure, updateFile } from "@/helpers/helpers"
 import { activeContainers } from "@/shared"
 import { generateText } from "ai"
 import { model } from "@/lib/ai/google"
@@ -7,6 +7,8 @@ import { db } from "@/db/db"
 import { project } from "@/db/schema/project.schema"
 import { eq } from "drizzle-orm"
 import { generateSummary } from "@/lib/prompt"
+import { NextTemplate } from "@repo/shared/constants/constants"
+import { doesProjectExists } from "./website.routes"
 
 export const sandboxRouter = new Hono()
 
@@ -132,5 +134,23 @@ sandboxRouter.patch("/file/:sbxId", async (c) => {
         return c.json({ success: true, message: "file updated successfully" })
     } catch (error) {
         return c.json({ success: false, message: "failed to update file" })
+    }
+})
+
+sandboxRouter.get("/get-files/:projectId", async (c) => {
+    try {
+        const { projectId } = c.req.param()
+
+        const projectExists = await doesProjectExists(projectId)
+
+        if (!projectExists.success) return c.json({ files: null, message: "Project not found" })
+
+        const files = getProjectStructure(projectId)
+        const codeFiles = Object.entries(files)
+        const code = { ...NextTemplate }
+        codeFiles.forEach(([path, content]) => (code[`/${path}`] = content))
+        return c.json({ files: code, message: "Project files fetched" })
+    } catch (error) {
+        return c.json({ files: null, message: "Failed to get project files" })
     }
 })

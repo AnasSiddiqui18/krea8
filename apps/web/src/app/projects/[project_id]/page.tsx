@@ -12,8 +12,8 @@ import { convertFilesToTree, emitFileChangeStatusMessage, pushMessageInChat } fr
 import { overlayCodeOnTopOfTemplate } from "@repo/shared/utils/overlay-code-on-template"
 import { DefaultChatTransport } from "ai"
 import { sandbox } from "@/queries/sandbox.queries"
-import { axios } from "@/lib/axios"
 import { useFetch } from "@/hooks/use-fetch"
+import { projects } from "@/queries/project.queries"
 
 export default function ChatPage({ params }: { params: Promise<{ project_id: string }> }) {
     const { initial_prompt, sbxId } = useSnapshot(globalStore)
@@ -23,19 +23,16 @@ export default function ChatPage({ params }: { params: Promise<{ project_id: str
     const [websiteGenerationCompleted, setWebsiteGenerationCompleted] = useState(false)
     const resolvedParams = React.use(params)
 
-    const { isPending, isError, error } = useFetch({
-        queryKey: ["fetch_chats"],
-        enabled: !!resolvedParams.project_id,
-        refetchOnWindowFocus: false,
-        refetchOnMount: false,
+    const { isPending } = useFetch({
+        queryKey: ["fetch_chats", resolvedParams.project_id],
         queryFn: async () => {
             try {
-                const chats = await axios.get(`/projects/get-chats/${resolvedParams.project_id}`)
+                const projectId = resolvedParams.project_id
 
-                const { data } = chats
+                const { success, data } = await projects.getProjectsChats(projectId)
 
-                if (!data.success) {
-                    console.error("Failed to fetch projects")
+                if (!success) {
+                    console.error("Failed to fetch chats")
                     return null
                 }
 
@@ -46,19 +43,44 @@ export default function ChatPage({ params }: { params: Promise<{ project_id: str
                     return null
                 }
 
-                return null
+                const iframeEl = document.querySelector("iframe")!
+                return (iframeEl.src = data.project.url)
             } catch (error) {
-                console.error("Failed to fetch projects", error)
+                console.error("Failed to fetch chats", error)
+                return null
             }
         },
     })
 
     useEffect(() => {
-        if (isPending) globalStore.isFetchingChats = true
-        return () => {
-            globalStore.isFetchingChats = false
-        }
+        globalStore.isFetchingChats = isPending
     }, [isPending])
+
+    const { isPending: isFetchingFiles } = useFetch({
+        queryKey: ["fetch_files", resolvedParams.project_id],
+        enabled: !initial_prompt,
+        queryFn: async () => {
+            try {
+                const projectId = resolvedParams.project_id
+
+                const files = await sandbox.getFiles(projectId)
+
+                if (!files.success) {
+                    console.error("Failed to fetch files")
+                    return null
+                }
+
+                const structuredFiles = convertFilesToTree(files.data.files)
+
+                globalStore.fileTree = structuredFiles
+                globalStore.sbxId = projectId
+                return files.data.files
+            } catch (error) {
+                console.error("Failed to fetch files", error)
+                return null
+            }
+        },
+    })
 
     const { object, submit } = useObject({
         api: `${process.env.NEXT_PUBLIC_SERVER_URL}/website/create-website/${sbxId}`,

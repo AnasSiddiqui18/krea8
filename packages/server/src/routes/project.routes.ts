@@ -1,7 +1,7 @@
 import { auth } from "@/auth/auth"
 import { db } from "@/db/db"
 import { project, projectChats } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import { Hono } from "hono"
 
 export const projectRouter = new Hono()
@@ -29,6 +29,7 @@ projectRouter.get("/get", async (c) => {
                 updatedAt: true,
                 url: true,
             },
+            orderBy: (p) => sql`${p.updatedAt} desc`,
         })
 
         if (!projects.length) return c.json({ success: false, message: "Projects not found" })
@@ -43,23 +44,24 @@ projectRouter.get("/get-chats/:projectId", async (c) => {
     try {
         const { projectId } = c.req.param()
 
-        console.log("project id", projectId)
-
         const session = await auth.api.getSession({ headers: c.req.header() })
 
         if (!session?.session)
             return c.json({
                 success: false,
                 message: "Session not found",
-                chats: [],
+                chats: null,
             })
 
-        const chats = await db.query.projectChats.findFirst({ where: eq(projectChats.projectId, projectId) })
+        const chats = await db.query.projectChats.findFirst({
+            where: eq(projectChats.projectId, projectId),
+            with: { project: { columns: { url: true } } },
+        })
 
-        if (!chats) return c.json({ chats: [], success: true, message: "Chats not found" })
+        if (!chats) return c.json({ chats: null, success: true, message: "Chats not found" })
 
         return c.json({ chats: chats, success: true, message: "Chats fetched successfully" })
     } catch (error) {
-        return c.json({ chats: [], success: false, message: "Failed to fetched chats" }, { status: 500 })
+        return c.json({ chats: null, success: false, message: "Failed to fetched chats" }, { status: 500 })
     }
 })

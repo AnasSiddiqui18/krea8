@@ -1,4 +1,4 @@
-import { NextTemplate } from "../constants/constants";
+import { NextTemplate } from "@repo/shared/constants/constants";
 import { extractFilePath } from "./extract-file-path";
 import { extractCodeContent } from "./extract-code-content";
 
@@ -17,7 +17,7 @@ export function overlayCodeOnTopOfTemplate(code: { rawFileBlock: string }[]) {
 
     const code = extractCodeContent(rawFileBlock);
 
-    if (code) object[filePath] = code;
+    if (code) object[`/${filePath}`] = code;
   });
 
   return object;

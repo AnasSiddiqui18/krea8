@@ -11,7 +11,6 @@ export const project = pgTable("project", {
         .notNull()
         .references(() => user.id, { onDelete: "cascade" }),
     image: varchar(),
-    chatId: uuid("chat_id").unique(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
         .defaultNow()
@@ -32,7 +31,6 @@ export const projectChats = pgTable("chats", {
 
 export const projectRelations = relations(project, ({ one }) => ({
     user: one(user, { fields: [project.userId], references: [user.id] }),
-    chats: one(projectChats, { fields: [project.chatId], references: [projectChats.id] }),
 }))
 
 export const projectChatsRelations = relations(projectChats, ({ one }) => ({

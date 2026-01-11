@@ -54,22 +54,40 @@ websiteRouter.post("/init", async (c) => {
         const session = await auth.api.getSession({ headers: c.req.header() })
         const { prompt } = await c.req.json()
 
-        if (!session) return c.json({ sucess: false, message: "failed to get session" }, { status: 400 })
+        if (!session)
+            return c.json({ sucess: false, message: "failed to get session", project_id: null }, { status: 400 })
 
         const sbxId = crypto.randomUUID()
 
-        const [projectResponse] = await db.insert(project).values({ id: sbxId, userId: session.user.id }).returning()
+        const transaction_res = await db.transaction(async (tx) => {
+            const [projectResponse] = await tx
+                .insert(project)
+                .values({ id: sbxId, userId: session.user.id })
+                .returning()
 
-        if (!projectResponse) return c.json({ success: false, message: "Failed to init project" })
+            if (!projectResponse) return sendError("failed to insert project record")
 
-        await db.insert(projectChats).values({
-            projectId: projectResponse.id,
-            content: [{ content: prompt, role: "user", type: "text" }],
+            const [chat] = await tx
+                .insert(projectChats)
+                .values({
+                    projectId: projectResponse.id,
+                    content: [{ content: prompt, role: "user", type: "text" }],
+                })
+                .returning()
+
+            if (!chat) return sendError("failed to insert chat record")
+
+            return sendSuccess("Project initialized")
         })
 
-        // find a way to insert chat id inside projects record
+        if (!transaction_res.success)
+            return c.json({ success: false, project_id: null, message: transaction_res.message })
 
-        return c.json({ status: "init_successfully", server_url: null, project_id: sbxId })
+        return c.json({
+            success: true,
+            project_id: sbxId,
+            message: transaction_res.data,
+        })
     } catch (error) {
         console.log("failed to init", error)
         return c.json({ success: false, message: "Failed to init project" })

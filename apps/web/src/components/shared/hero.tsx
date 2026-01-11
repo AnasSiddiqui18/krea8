@@ -12,7 +12,7 @@ import z from "zod"
 import { globalStore } from "@/store/global.store"
 import { redirect } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
-import { axios } from "@/lib/axios"
+import { website } from "@/queries/website.queries"
 
 export function Hero() {
     return (
@@ -59,13 +59,13 @@ function MainPromptArea() {
         const { prompt } = value
         globalStore.initial_prompt = prompt
 
-        const response = await axios.post("/website/init", { prompt })
+        const response = await website.init(prompt)
 
-        if ("status" in response.data) {
-            const { project_id } = response.data
-            globalStore.sbxId = project_id
-            redirect(`/projects/${project_id}`)
-        }
+        if (!response.success) return console.error("website init failed")
+
+        const { project_id } = response.data
+        globalStore.sbxId = project_id
+        redirect(`/projects/${project_id}`)
     }
 
     return (

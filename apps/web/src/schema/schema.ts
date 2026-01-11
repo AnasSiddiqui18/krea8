@@ -216,3 +216,17 @@ export const projectFilesSchema = z.object({
     files: z.record(z.string(), z.string()),
     message: z.string(),
 })
+
+export const initWebsiteSchema = z.union([
+    z.object({
+        success: z.literal(true),
+        project_id: z.string(),
+        message: z.string(),
+    }),
+
+    z.object({
+        success: z.literal(false),
+        project_id: z.null(),
+        message: z.string(),
+    }),
+])

@@ -1,4 +1,4 @@
-import { env } from "@/env/env"
+import { env } from "@/lib/env"
 import { S3Client } from "@aws-sdk/client-s3"
 
 export const s3Client = new S3Client({
